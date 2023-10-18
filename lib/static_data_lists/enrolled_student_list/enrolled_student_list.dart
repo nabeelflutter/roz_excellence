@@ -8,3 +8,12 @@ List<EnrolledStudentModel> fetchEnrolledStudentsList = [
   EnrolledStudentModel(name: 'Patrick', imagePath: 'assets/images/privacy.webp', price: '\$10', titleOfCourse: 'Machine Learning'),
 
 ];
+
+List<EnrolledStudentModel> fetchTeacherList = [
+EnrolledStudentModel(name: 'Patrick', imagePath: 'assets/images/t1.jpg', price: '\$10', titleOfCourse: 'Machine Learning'),
+EnrolledStudentModel(name: 'Daniel', imagePath: 'assets/images/t3.jpg', price: '\$15', titleOfCourse: 'Flutter'),
+EnrolledStudentModel(name: 'Starling', imagePath: 'assets/images/t4.jpg', price: '\$10', titleOfCourse: 'Machine Learning'),
+EnrolledStudentModel(name: 'Patrick', imagePath: 'assets/images/teacher.webp', price: '\$10', titleOfCourse: 'Machine Learning'),
+EnrolledStudentModel(name: 'Patrick', imagePath: 'assets/images/enrolled.webp', price: '\$10', titleOfCourse: 'Machine Learning'),
+
+];

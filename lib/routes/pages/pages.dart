@@ -11,7 +11,7 @@ class PageName {
   static const String enrolledStudentViewScreen = "/enrolledStudentViewScreen";
   static const String allStudentsScreen = "/allStudentsScreen";
   static const String allStudentsViewScreen = "/allStudentsViewScreen";
-  static const String openWebSiteScreen = "/openWebSiteScreen";
+  static const String viewUrlScreen = "/viewUrlScreen";
   static const String messageUserLists = "/messageUserLists";
   static const String conversationScreen = "/conversationScreen";
   static const String assignmentsScreen = "/assignmentsScreen";
@@ -19,6 +19,8 @@ class PageName {
   static const String adminAndEdotorScreen = "/adminAndEdotorScreen";
   static const String addNewAdminScreen = "/addNewAdminScreen";
   static const String viewEditorScreen = "/viewEditorScreen";
+  static const String viewUrlScreen1 = "/viewUrlScreen1";
+
 
 
 

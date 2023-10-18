@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:rose_excellence_admin_panel_web1/routes/pages/pages.dart';
 
 import '../../../constants/constants.dart';
-import '../../../model/ViewUrlModel/View_url_model.dart';
 
 class HomeScreenBehaviour extends StatelessWidget {
   const HomeScreenBehaviour({super.key});
@@ -131,7 +130,7 @@ class HomeScreenBehaviour extends StatelessWidget {
                   ),
                   GestureDetector(
                     onTap:(){
-                      Navigator.pushNamed(context, PageName.openWebSiteScreen,arguments: ViewUrlModel(title: 'Term & Condition',url: 'https://www.africau.edu/images/default/sample.pdf'));
+                      Navigator.pushNamed(context, PageName.viewUrlScreen);
                     },
                     child: customContainer(
                         imagePath: 'assets/images/term.webp',
@@ -141,7 +140,7 @@ class HomeScreenBehaviour extends StatelessWidget {
                   ),
                   GestureDetector(
                     onTap:(){
-                      Navigator.pushNamed(context, PageName.openWebSiteScreen,arguments: ViewUrlModel(title: 'Privacy',url: 'https://www.africau.edu/'));
+                      Navigator.pushNamed(context, PageName.viewUrlScreen1,);
                     },
                     child: customContainer(
                         imagePath: 'assets/images/privacy.webp',

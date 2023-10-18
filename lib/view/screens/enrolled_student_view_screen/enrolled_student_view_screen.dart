@@ -54,18 +54,23 @@ class _EnrolledStudentViewScreenState extends State<EnrolledStudentViewScreen> {
                       fit: BoxFit.fill
                     )
                 ),),
-                  Text('User Email :'),
-                  Text('Phone Number :'),
+                  Text('User Email:   megi123@gmail.com'),
+                  Text('Phone Number:  +17027800034'),
                   Container(
                     height:height*.10,
                     decoration: BoxDecoration(
                         border: Border.all(color: Constants.greyColorr),
                     ),child: Center(child: Text('Patrick',style: TextStyle(fontWeight: FontWeight.bold),),),),
-                  Container(
-                    height:height*.10,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Constants.greyColorr),
-                    ),child: Center(child: Text('Message',style: TextStyle(fontWeight: FontWeight.bold),)),),
+                  GestureDetector(
+                    onTap:(){
+                      Navigator.pushNamed(context, PageName.messageUserLists);
+                    },
+                    child: Container(
+                      height:height*.10,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Constants.greyColorr),
+                      ),child: Center(child: Text('Message',style: TextStyle(fontWeight: FontWeight.bold),)),),
+                  ),
               ],),
             ),
             )),

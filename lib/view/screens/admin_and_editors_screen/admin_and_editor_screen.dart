@@ -50,7 +50,7 @@ class _AdminAndEdotorScreenState extends State<AdminAndEdotorScreen> {
                 vertical: height * .03, horizontal: width * .03),
             child: GridView.builder(
               controller: _scrollController,
-              itemCount: fetchListOfModel.length,
+              itemCount: fetchTeacherList.length,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 4,
               ),
@@ -70,7 +70,7 @@ class _AdminAndEdotorScreenState extends State<AdminAndEdotorScreen> {
                         decoration: BoxDecoration(
                             image: DecorationImage(
                           image: AssetImage(
-                            fetchEnrolledStudentsList[index].imagePath,
+                            fetchTeacherList[index].imagePath,
                           ),
                           fit: BoxFit.fill,
                         )),
@@ -78,15 +78,43 @@ class _AdminAndEdotorScreenState extends State<AdminAndEdotorScreen> {
                       SizedBox(
                         height: height * .02,
                       ),
-                      Text(
-                        'Name : Jon',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 14),
+                    Padding(
+                      padding:  EdgeInsets.only(right: width*.05),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                        children: [
+                          Text(
+                            'Name',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                          Text(
+                            'Jon',
+                            style: const TextStyle(
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        'Email : Jon123@gmail.com',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                      Padding(
+                        padding:  EdgeInsets.only(right: width*.05),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                          children: [
+                            Text(
+                              'Email',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
+                            Text(
+                              'Jon123@gmail.com',
+                              style: const TextStyle(
+                                  ),
+                            ),
+                          ],
+                        ),
                       ),
                       SizedBox(
                         height: height * .003,
@@ -95,7 +123,7 @@ class _AdminAndEdotorScreenState extends State<AdminAndEdotorScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Role',
+                            'Teacher',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                           SizedBox(
@@ -105,7 +133,7 @@ class _AdminAndEdotorScreenState extends State<AdminAndEdotorScreen> {
                             padding:
                                 EdgeInsets.symmetric(horizontal: width * .05),
                             child: Text(
-                           'Aded Date',
+                           '01/04/2023',
                               style: const TextStyle(color: Colors.black),
                             ),
                           ),

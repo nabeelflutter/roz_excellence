@@ -25,7 +25,7 @@ class _ViewEditorScreenState extends State<ViewEditorScreen> {
               color: Constants.wightColor,
             )),
         title: Text(
-          'View User',
+          'View Editor',
           style: TextStyle(
               color: Constants.wightColor, fontWeight: FontWeight.bold),
         ),
@@ -41,6 +41,14 @@ class _ViewEditorScreenState extends State<ViewEditorScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
+              Align(
+                alignment: Alignment.topRight,
+                child: Container(height: height*.07,width: width*.10,decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(10),
+                  border:Border.all(color: Colors.grey)
+                ),child: Center(child: Text('Delete',style: TextStyle(color: Constants.wightColor),),),),
+              ),
               Container(
                 height:height*.40,
                 decoration: BoxDecoration(
@@ -67,7 +75,7 @@ class _ViewEditorScreenState extends State<ViewEditorScreen> {
                 height:height*.10,
                 decoration: BoxDecoration(
                   border: Border.all(color: Constants.greyColorr),
-                ),child: const Center(child: Text('Role',style: TextStyle(fontWeight: FontWeight.bold),)),),
+                ),child: const Center(child: Text('Teacher',style: TextStyle(fontWeight: FontWeight.bold),)),),
             ],),
         ),
       ),),

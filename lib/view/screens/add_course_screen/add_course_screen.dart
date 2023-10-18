@@ -12,7 +12,7 @@ class AddCoursesScreen extends StatefulWidget {
 }
 
 class _AddCoursesScreenState extends State<AddCoursesScreen> {
-  ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void dispose() {
@@ -62,13 +62,6 @@ class _AddCoursesScreenState extends State<AddCoursesScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        child: Center(
-                          child: Icon(
-                            Icons.play_circle,
-                            size: 40,
-                            color: Constants.greyColorr,
-                          ),
-                        ),
                         height: height * .30,
                         width: width * .20,
                         decoration: BoxDecoration(
@@ -78,6 +71,13 @@ class _AddCoursesScreenState extends State<AddCoursesScreen> {
                           ),
                           fit: BoxFit.fill,
                         )),
+                        child: Center(
+                          child: Icon(
+                            Icons.play_circle,
+                            size: 40,
+                            color: Constants.greyColorr,
+                          ),
+                        ),
                       ),
                       SizedBox(
                         height: height * .02,
@@ -108,11 +108,11 @@ class _AddCoursesScreenState extends State<AddCoursesScreen> {
         floatingActionButton: ScrollingFabAnimated(
           color: Constants.darkPink,
           width: 150,
-          icon: Icon(
+          icon: const Icon(
             Icons.add,
             color: Colors.white,
           ),
-          text: Text(
+          text: const Text(
             'Add Course',
             style: TextStyle(color: Colors.white, fontSize: 16.0),
           ),
