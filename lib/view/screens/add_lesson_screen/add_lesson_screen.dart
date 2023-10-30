@@ -1,6 +1,10 @@
+import 'dart:html';
+
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../constants/constants.dart';
@@ -27,7 +31,39 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
   final ImagePicker picker = ImagePicker();
   late VideoPlayerController _controller;
   var pickedFile;
+  Uuid uuid = Uuid();
   List<dynamic> videoList = [];
+  var videoUrl;
+  var videoUrlPath;
+  UploadTask? task;
+  bool isChecked = false;
+  Future uploadVideo() async {
+    FileUploadInputElement input = FileUploadInputElement()..accept = 'video/*';
+    input.click();
+    input.onChange.listen((event) {
+      videoUrl = input.files!.first;
+      final reader = FileReader();
+      reader.readAsDataUrl(videoUrl);
+      reader.onLoadEnd.listen((event) {
+        Reference reference = FirebaseStorage.instance
+            .ref()
+            .child('videos/')
+            .child(uuid.v4().toString());
+        setState(() {
+          task = reference.putBlob(videoUrl);
+        });
+        task!.whenComplete(() {
+          reference.getDownloadURL().then((url) {
+            videoUrlPath = url;
+          });
+          setState(() {
+            isChecked = true;
+            task = null;
+          });
+        });
+      });
+    });
+  }
 
   @override
   void initState() {
@@ -385,9 +421,6 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
                                       Container(
                                         height: height * .25,
                                         width: width * .32,
-                                        decoration: BoxDecoration(
-                                            border: Border.all(
-                                                color: Constants.greyColorr)),
                                         child: Padding(
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 2, vertical: 2),
@@ -397,28 +430,21 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
                                             children: [
                                               GestureDetector(
                                                 onTap: () async {
-                                                  pickedFile =
-                                                      await picker.pickVideo(
-                                                          source: ImageSource
-                                                              .gallery);
-                                                  _controller =
-                                                      VideoPlayerController
-                                                          .asset(pickedFile
-                                                                  ?.path ??
-                                                              '')
-                                                        ..initialize()
-                                                            .then((_) {
-                                                          setState(() {});
-                                                        });
+                                                  uploadVideo();
                                                 },
                                                 child: Container(
-                                                 // height: height * .25,
+                                                  // height: height * .25,
                                                   decoration:
-                                                      const BoxDecoration(
-                                                          color: Colors.grey),
+                                                  const BoxDecoration(color: Colors.grey),
                                                   width: width * .10,
-                                                  child: const Center(
-                                                    child: Icon(Icons.add),
+                                                  child:  Center(
+                                                    child: Stack(
+                                                      alignment: Alignment.center,
+                                                      children: [
+                                                        isChecked == true ?Icon(Icons.done,color: Colors.white,size: 60,):Icon(Icons.add),
+                                                        buildProgress()
+                                                      ],
+                                                    ),
                                                   ),
                                                 ),
                                               ),
@@ -546,6 +572,25 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
         ),
       ),
     );
+
+  }
+  Widget buildProgress() {
+    if (task != null) {
+      return StreamBuilder<TaskSnapshot>(
+        stream: task!.snapshotEvents,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            final data = snapshot.data;
+            double progress = data!.bytesTransferred / data.totalBytes;
+            return Center(child: CircularProgressIndicator(value: progress,color: Colors.white,));
+          } else {
+            return SizedBox();
+          }
+        },
+      );
+    } else {
+      return SizedBox();
+    }
   }
 
   Widget customWidget(

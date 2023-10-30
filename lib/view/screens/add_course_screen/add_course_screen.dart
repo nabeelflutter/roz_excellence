@@ -74,7 +74,7 @@ class _AddCoursesScreenState extends State<AddCoursesScreen> {
                   AddCourseInformationModel model = models[index];
                   return GestureDetector(
                     onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => EditCourseScreen(courseid: model.id,videoUrl: model.videoUrl, courseName: model.courseName, courseTitle: model.courseTitle, coursePrice: model.coursePrice, courseDuration: model.courseDuration, courseDescription: model.courseDescription,),));
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => EditCourseScreen(courseid: 'OD81e89ohl6IOzNFr2m9',videoUrl: model.videoUrl, courseName: model.courseName, courseTitle: model.courseTitle, coursePrice: model.coursePrice, courseDuration: model.courseDuration, courseDescription: model.courseDescription,),));
                     },
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

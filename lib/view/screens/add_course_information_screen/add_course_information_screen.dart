@@ -42,7 +42,9 @@ class _AddCourseInformationScreenState
   Uuid uuid = Uuid();
   var videoUrlPath;
   var videoUrl;
+  bool isChecked = false;
   UploadTask? task;
+  String? videoPath;
   Future uploadVideo() async {
     FileUploadInputElement input = FileUploadInputElement()..accept = 'video/*';
     input.click();
@@ -63,6 +65,7 @@ class _AddCourseInformationScreenState
             videoUrlPath = url;
           });
           setState(() {
+            isChecked = true;
             task = null;
           });
         });
@@ -75,7 +78,7 @@ class _AddCourseInformationScreenState
     categoryController = TextEditingController();
     subcategoryTitle = TextEditingController();
     super.initState();
-    _controller = VideoPlayerController.asset(videoUrl?.path ?? '')
+    _controller = VideoPlayerController.asset(videoUrlPath?.path ?? '')
       ..initialize().then((_) {
         setState(() {});
       });
@@ -135,22 +138,13 @@ class _AddCourseInformationScreenState
                     'courseDuration': courseDurationController.text
                   }))
                    .then((DocumentReference doc) {
-                   FirebaseFirestore.instance.collection('Lessons').doc(doc.id).collection('lesson').add({
+                   FirebaseFirestore.instance.collection('Lessons').add({
                      'id': doc.id,
                      'lessons' : subCategoryControllers.map((controller) => controller.text).toList(),
+                   }).then((value) {
+                     Navigator.pop(context);
                    });
               });
-
-
-              // AddCourseInformationModel newModel = AddCourseInformationModel(id: 'j', courseName: courseNameController.text, courseTitle: courseTitleController.text, coursePrice: coursePriceController.text, courseDescription: courseDiscriptionController.text, videoUrl: videoUrlPath.toString(), courseDuration: courseDurationController.text,);
-              // addCourseInformationToFirebase(newModel).then((DocumentReference) {
-              //  FirebaseFirestore.instance.collection('Lessons').add({
-              //    'id': 'q',
-              //    'lessons' : subCategoryControllers.map((controller) => controller.text).toList(),
-              //  }).then((value) {
-              //    Navigator.pop(context);
-              //  });
-              // });
             },
             child: Container(
               margin: EdgeInsets.all(5),
@@ -296,8 +290,6 @@ class _AddCourseInformationScreenState
                         Container(
                           height: height * .25,
                           width: width * .32,
-                          decoration: BoxDecoration(
-                              border: Border.all(color: Constants.greyColorr)),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 2, vertical: 2),
@@ -317,42 +309,11 @@ class _AddCourseInformationScreenState
                                       child: Stack(
                                         alignment: Alignment.center,
                                         children: [
-                                          task != null ?SizedBox():Icon(Icons.add),
+                                          isChecked == true ?Icon(Icons.done,color: Colors.white,size: 60,):Icon(Icons.add),
                                           buildProgress()
                                         ],
                                       ),
                                     ),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: width * .20,
-                                  child: Stack(
-                                    fit: StackFit.expand,
-                                    // alignment: Alignment.center,
-                                    children: [
-                                      _controller.value.isInitialized
-                                          ? AspectRatio(
-                                              aspectRatio:
-                                                  _controller.value.aspectRatio,
-                                              child: VideoPlayer(_controller),
-                                            )
-                                          : Container(),
-                                      GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            _controller.value.isPlaying
-                                                ? _controller.pause()
-                                                : _controller.play();
-                                          });
-                                        },
-                                        child: Icon(
-                                          _controller.value.isPlaying
-                                              ? Icons.pause
-                                              : Icons.play_arrow,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
                                   ),
                                 ),
                               ],
@@ -440,7 +401,7 @@ class _AddCourseInformationScreenState
       onTap: () {
         final subCategoryNameController = TextEditingController();
         final subCategoryField = Container(
-          padding: EdgeInsets.only(left: 10, right: 10),
+          padding: const EdgeInsets.only(left: 10, right: 10),
           child: CustomTextField(
             readOnly: false,
             isEnebled: isEnbled,
@@ -492,4 +453,50 @@ class _AddCourseInformationScreenState
     }
   }
 
+}
+class VideoPlayerScreen extends StatefulWidget {
+  final String videoUrl;
+
+  const VideoPlayerScreen({required this.videoUrl, super.key});
+
+  @override
+  State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
+}
+
+class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
+  late VideoPlayerController _controller;
+  late Future<void> _initializeVideoPlayerFuture;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = VideoPlayerController.network(widget.videoUrl);
+    _initializeVideoPlayerFuture = _controller.initialize();
+    _controller.setLooping(true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 200,
+      width: 200,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          AspectRatio(
+            aspectRatio: _controller.value.aspectRatio,
+            child: VideoPlayer(_controller),
+          ),
+          Icon(Icons.play_circle,color: Colors.white,)
+        ],
+      ),
+    );
+  }
 }
