@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../constants/constants.dart';
 import '../../../routes/pages/pages.dart';
 import '../../../static_data_lists/view_lesson_list/view_lesson_list.dart';
 import '../../widget/textfields.dart';
+import '../play_video_screen/play_video_screen.dart';
 
 class ViewLessonScreen extends StatefulWidget {
   const ViewLessonScreen({super.key});
@@ -17,6 +19,14 @@ class _ViewLessonScreenState extends State<ViewLessonScreen> {
   TextEditingController lessonTitleController = TextEditingController();
   TextEditingController lessonSubtitleController = TextEditingController();
   TextEditingController lessonDiscriptionController = TextEditingController();
+  final List<String> videoUrls = [
+    'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
+    // Add more video URLs here
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -119,20 +129,25 @@ class _ViewLessonScreenState extends State<ViewLessonScreen> {
                 padding: EdgeInsets.symmetric(
                     horizontal: width * .05, vertical: height * .02),
                 child: Container(
-                  height: height * .25,
+                  height: height * .40,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: fetchViewLessonModellList.length,
                     itemBuilder: (context, index) {
                       return GestureDetector(
                           onTap: () {
-                            Navigator.pushNamed(
-                                context, PageName.playVideoScreen,
-                                arguments:
-                                    fetchViewLessonModellList[index].ImagePath);
+                            // Navigator.pushNamed(
+                            //     context, PageName.playVideoScreen,
+                            //     arguments:
+                            //         fetchViewLessonModellList[index].ImagePath);
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => PlayVideoScreen(
+                                videoSubTitle: fetchViewLessonModellList[index].videoSubTitle,
+                                videoTitle: fetchViewLessonModellList[index].videoTitle,
+                                videoPath: videoUrls[index]),));
                           },
                           child: customWidget(
                               height: height,
+                              index: index,
                               width: width,
                               videoTitle:
                                   fetchViewLessonModellList[index].videoTitle,
@@ -156,56 +171,75 @@ class _ViewLessonScreenState extends State<ViewLessonScreen> {
       double? width,
       String? videoTitle,
       String? videosubTitle,
+        var index,
       String? imagePath}) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Container(
-        height: height! * .20,
-        width: width! * .20,
-        decoration: BoxDecoration(border: Border.all(color: Colors.grey)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Container(
-                width: width! * .20,
-                child: Center(
-                  child: Icon(
-                    Icons.play_circle,
-                    size: 40,
-                    color: Constants.greyColorr,
-                  ),
-                ),
-                decoration: BoxDecoration(
-                    image: DecorationImage(
-                  image: AssetImage(
-                    //height:height!*.15,
-
-                    imagePath!,
-                  ),
-                  fit: BoxFit.fill,
-                )),
-              ),
-            ),
-            SizedBox(
-              height: height * .01,
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: width * .01),
-              child: Text(
-                videoTitle!,
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: width * .01),
-              child: Text(
-                videosubTitle!,
-                style: TextStyle(color: Colors.grey.shade500),
-              ),
-            )
-          ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Expanded(child: VideoPlayerScreen(videoUrl: videoUrls[index])),
         ),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: width !* .01),
+          child: Text(
+            videoTitle!,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: width * .01),
+          child: Text(
+            videosubTitle!,
+            style: TextStyle(color: Colors.grey.shade500),
+          ),
+        )
+      ],
+    );
+  }
+}
+class VideoPlayerScreen extends StatefulWidget {
+  final String videoUrl;
+
+  const VideoPlayerScreen({required this.videoUrl, super.key});
+
+  @override
+  State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
+}
+
+class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
+  late VideoPlayerController _controller;
+  late Future<void> _initializeVideoPlayerFuture;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = VideoPlayerController.network(widget.videoUrl);
+    _initializeVideoPlayerFuture = _controller.initialize();
+    _controller.setLooping(true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 200,
+      width: 200,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          AspectRatio(
+            aspectRatio: _controller.value.aspectRatio,
+            child: VideoPlayer(_controller),
+          ),
+          Icon(Icons.play_circle,color: Colors.white,)
+        ],
       ),
     );
   }

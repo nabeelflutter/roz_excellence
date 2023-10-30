@@ -1,10 +1,22 @@
-import 'dart:io';
+import 'dart:convert';
+import 'dart:html';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:uuid/uuid.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
+import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:video_player/video_player.dart';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../constants/constants.dart';
+import '../../../model/add_course_information_model/add_course_information_model.dart';
 import '../../widget/textfields.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AddCourseInformationScreen extends StatefulWidget {
   const AddCourseInformationScreen({super.key});
@@ -26,12 +38,47 @@ class _AddCourseInformationScreenState
   List<Widget> subCategoryFields = [];
   late TextEditingController categoryController;
   late TextEditingController subcategoryTitle;
+  late VideoPlayerController _controller;
+  Uuid uuid = Uuid();
+  var videoUrlPath;
+  var videoUrl;
+  UploadTask? task;
+  Future uploadVideo() async {
+    FileUploadInputElement input = FileUploadInputElement()..accept = 'video/*';
+    input.click();
+    input.onChange.listen((event) {
+      videoUrl = input.files!.first;
+      final reader = FileReader();
+      reader.readAsDataUrl(videoUrl);
+      reader.onLoadEnd.listen((event) {
+        Reference reference = FirebaseStorage.instance
+            .ref()
+            .child('videos/')
+            .child(uuid.v4().toString());
+        setState(() {
+          task = reference.putBlob(videoUrl);
+        });
+        task!.whenComplete(() {
+          reference.getDownloadURL().then((url) {
+            videoUrlPath = url;
+          });
+          setState(() {
+            task = null;
+          });
+        });
+      });
+    });
+  }
   @override
   void initState() {
+    print('$videoUrl >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
     categoryController = TextEditingController();
     subcategoryTitle = TextEditingController();
     super.initState();
-
+    _controller = VideoPlayerController.asset(videoUrl?.path ?? '')
+      ..initialize().then((_) {
+        setState(() {});
+      });
   }
 
   @override
@@ -42,6 +89,14 @@ class _AddCourseInformationScreenState
       controller.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> addCourseInformationToFirebase(
+      AddCourseInformationModel addCourseInformationModel) async {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    await firestore
+        .collection('Courses')
+        .add(addCourseInformationModel.toMap());
   }
 
   @override
@@ -66,26 +121,58 @@ class _AddCourseInformationScreenState
         iconTheme: IconThemeData(color: Constants.wightColor),
         backgroundColor: Constants.darkPink,
         actions: [
-          Container(
-            margin: EdgeInsets.all(5),
-            height: 40,
-            width: 110,
-            decoration: BoxDecoration(boxShadow: [
-              BoxShadow(
-                color: Constants.darkPink.withOpacity(0.1),
-                spreadRadius: 4,
-                blurRadius: 10,
-                offset: Offset(0, 3),
-              )
-            ], color: Colors.white, borderRadius: BorderRadius.circular(8)),
-            child: Center(
-                child: Text(
-              'Done',
-              style: GoogleFonts.playfairDisplay().copyWith(
-                  color: Constants.darkPink,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold),
-            )),
+          InkWell(
+            onTap: () async {
+              await FirebaseFirestore.instance
+                  .collection('Courses')
+                  .add(({
+                    'id': FirebaseAuth.instance.currentUser!.uid,
+                    'courseName': courseNameController.text,
+                    'courseTitle': courseTitleController.text,
+                    'coursePrice': coursePriceController.text,
+                    'courseDescription': courseDiscriptionController.text,
+                    'videoUrl': videoUrlPath.toString(),
+                    'courseDuration': courseDurationController.text
+                  }))
+                   .then((DocumentReference doc) {
+                   FirebaseFirestore.instance.collection('Lessons').doc(doc.id).collection('lesson').add({
+                     'id': doc.id,
+                     'lessons' : subCategoryControllers.map((controller) => controller.text).toList(),
+                   });
+              });
+
+
+              // AddCourseInformationModel newModel = AddCourseInformationModel(id: 'j', courseName: courseNameController.text, courseTitle: courseTitleController.text, coursePrice: coursePriceController.text, courseDescription: courseDiscriptionController.text, videoUrl: videoUrlPath.toString(), courseDuration: courseDurationController.text,);
+              // addCourseInformationToFirebase(newModel).then((DocumentReference) {
+              //  FirebaseFirestore.instance.collection('Lessons').add({
+              //    'id': 'q',
+              //    'lessons' : subCategoryControllers.map((controller) => controller.text).toList(),
+              //  }).then((value) {
+              //    Navigator.pop(context);
+              //  });
+              // });
+            },
+            child: Container(
+              margin: EdgeInsets.all(5),
+              height: 40,
+              width: 110,
+              decoration: BoxDecoration(boxShadow: [
+                BoxShadow(
+                  color: Constants.darkPink.withOpacity(0.1),
+                  spreadRadius: 4,
+                  blurRadius: 10,
+                  offset: Offset(0, 3),
+                )
+              ], color: Colors.white, borderRadius: BorderRadius.circular(8)),
+              child: Center(
+                  child: Text(
+                'Done',
+                style: GoogleFonts.playfairDisplay().copyWith(
+                    color: Constants.darkPink,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold),
+              )),
+            ),
           ),
         ],
       ),
@@ -104,56 +191,60 @@ class _AddCourseInformationScreenState
                 height: height * .01,
               ),
               CustomTextField(
-                readOnly: false,
+                  readOnly: false,
                   validator: (value) {},
                   textEditingController: courseNameController,
                   textColor: Colors.black,
-                  MediaQuery.of(context).size.width*.95,
+                  MediaQuery.of(context).size.width * .95,
                   'Enter your Course Name'),
               SizedBox(
                 height: height * .05,
               ),
               Padding(
-                padding:  EdgeInsets.only(right: width*.05,left: width*.03),
+                padding: EdgeInsets.only(right: width * .05, left: width * .03),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Course Title',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: height*.01,),
-                      CustomTextField(
-                          readOnly: false,
-                          validator: (value) {},
-                          textEditingController: courseTitleController,
-                          textColor: Colors.black,
-                          MediaQuery.of(context).size.width*.35,
-                          'Enter Course title'),
-                    ],
-                  ),
-
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Course Price',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: height*.01,),
-                      CustomTextField(
-                          readOnly: false,
-                          validator: (value) {},
-                          textEditingController: coursePriceController,
-                          textColor: Colors.black,
-                          MediaQuery.of(context).size.width*.35,
-                          'Enter Course price'),
-                    ],
-                  ),
-                ],),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Course Title',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(
+                          height: height * .01,
+                        ),
+                        CustomTextField(
+                            readOnly: false,
+                            validator: (value) {},
+                            textEditingController: courseTitleController,
+                            textColor: Colors.black,
+                            MediaQuery.of(context).size.width * .35,
+                            'Enter Course title'),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Course Price',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(
+                          height: height * .01,
+                        ),
+                        CustomTextField(
+                            readOnly: false,
+                            validator: (value) {},
+                            textEditingController: coursePriceController,
+                            textColor: Colors.black,
+                            MediaQuery.of(context).size.width * .35,
+                            'Enter Course price'),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               SizedBox(
                 height: height * .05,
@@ -167,7 +258,7 @@ class _AddCourseInformationScreenState
                 child: TextFormField(
                   controller: courseDiscriptionController,
                   maxLines: 5,
-                  decoration:  InputDecoration(
+                  decoration: InputDecoration(
                     border: OutlineInputBorder(
                       borderSide: BorderSide(
                           color: Constants.darkPink,
@@ -177,77 +268,128 @@ class _AddCourseInformationScreenState
                     enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide:
-                        BorderSide(color: Colors.black.withOpacity(0.3))),
+                            BorderSide(color: Colors.black.withOpacity(0.3))),
                     focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide:
-                        BorderSide(color: Constants.pinkColor, width: 2)
-                    ),
+                            BorderSide(color: Constants.pinkColor, width: 2)),
                     hintText: 'Course Discription',
                     hintStyle: TextStyle(color: Constants.pinkColor),
                   ),
                 ),
               ),
-              SizedBox(height: height*.02,),
+              SizedBox(
+                height: height * .02,
+              ),
               const Text(
                 'Add Intro Video',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
               ),
               Row(
                 children: [
-                  Container(
-                    height: height*.25,
-                    width: width*.35,
-                    decoration: BoxDecoration(border: Border.all(color: Constants.greyColorr)),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2,vertical: 2),
-                    child: Row(children: [
-                      Container(height: height*.25,
-                        decoration: BoxDecoration(color: Colors.grey),
-                        width: width*.10,child: Center(child: Icon(Icons.add),),),
-                      SizedBox(width: width*.03,),
-                      Expanded(
-                        child: Container(
-                          child: Center(child: Icon(Icons.play_circle,size: 40,color: Constants.greyColorr,),),
-                          height: height*.25,
+                  Padding(
+                    padding: const EdgeInsets.all(0.8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          height: height * .25,
+                          width: width * .32,
                           decoration: BoxDecoration(
-                            image: DecorationImage(image: AssetImage(
-                              'assets/images/term.webp',
-                            ), fit: BoxFit.fill,)
+                              border: Border.all(color: Constants.greyColorr)),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 2, vertical: 2),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                GestureDetector(
+                                  onTap: () async {
+                                    uploadVideo();
+                                  },
+                                  child: Container(
+                                    // height: height * .25,
+                                    decoration:
+                                        const BoxDecoration(color: Colors.grey),
+                                    width: width * .10,
+                                    child:  Center(
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          task != null ?SizedBox():Icon(Icons.add),
+                                          buildProgress()
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: width * .20,
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    // alignment: Alignment.center,
+                                    children: [
+                                      _controller.value.isInitialized
+                                          ? AspectRatio(
+                                              aspectRatio:
+                                                  _controller.value.aspectRatio,
+                                              child: VideoPlayer(_controller),
+                                            )
+                                          : Container(),
+                                      GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            _controller.value.isPlaying
+                                                ? _controller.pause()
+                                                : _controller.play();
+                                          });
+                                        },
+                                        child: Icon(
+                                          _controller.value.isPlaying
+                                              ? Icons.pause
+                                              : Icons.play_arrow,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ),
-                    ],),
+                        )
+                      ],
+                    ),
                   ),
+                  Spacer(),
+                  Container(
+                    height: height * .25,
+                    width: width * .35,
+                    decoration: BoxDecoration(
+                        border: Border.all(color: Constants.greyColorr)),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        CustomTextField(
+                            readOnly: false,
+                            validator: (value) {},
+                            textEditingController: courseDurationController,
+                            textColor: Colors.black,
+                            MediaQuery.of(context).size.width * .35,
+                            'Enter Duration'),
+                        Align(
+                          alignment: Alignment.center,
+                          child: SizedBox(
+                              width: width * .20,
+                              height: height * .09,
+                              child: _addFieldsButton()),
+                        ),
+                      ],
+                    ),
                   )
-                  ,Spacer()
-                  ,  Container(
-                    height: height*.25,
-                    width: width*.35,
-                    decoration: BoxDecoration(border: Border.all(color: Constants.greyColorr)),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                    CustomTextField(
-                        readOnly: false,
-                        validator: (value) {},
-                        textEditingController: courseDurationController,
-                        textColor: Colors.black,
-                        MediaQuery.of(context).size.width*.35,
-                        'Enter Duration'),
-                      Align(
-                        alignment: Alignment.center,
-                        child: SizedBox(
-                            width: width * .20,
-                            height: height *.09,
-                            child: _addFieldsButton()),
-                      ),
-                  ],),
-                  )
-
                 ],
               ),
-
               Container(
                 height: 500,
                 width: width,
@@ -283,12 +425,17 @@ class _AddCourseInformationScreenState
         height: 120,
         width: 200,
         padding: EdgeInsets.all(5),
-        child: Center(child: Text('Add Lesson',style: TextStyle(color: Constants.wightColor,fontWeight: FontWeight.bold),)),
         decoration: BoxDecoration(
           color: Constants.darkPink,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.white, width: 2),
         ),
+        child: Center(
+            child: Text(
+          'Add Lesson',
+          style: TextStyle(
+              color: Constants.wightColor, fontWeight: FontWeight.bold),
+        )),
       ),
       onTap: () {
         final subCategoryNameController = TextEditingController();
@@ -326,4 +473,23 @@ class _AddCourseInformationScreenState
       },
     );
   }
+  Widget buildProgress() {
+    if (task != null) {
+      return StreamBuilder<TaskSnapshot>(
+        stream: task!.snapshotEvents,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            final data = snapshot.data;
+            double progress = data!.bytesTransferred / data.totalBytes;
+            return Center(child: CircularProgressIndicator(value: progress,color: Colors.white,));
+          } else {
+            return SizedBox();
+          }
+        },
+      );
+    } else {
+      return SizedBox();
+    }
+  }
+
 }

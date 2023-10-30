@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rose_excellence_admin_panel_web1/routes/pages/pages.dart';
 import 'package:rose_excellence_admin_panel_web1/view/widget/textfields.dart';
-
+import 'package:rose_excellence_admin_panel_web1/view_model/login_bloc/login_bloc.dart';
+import 'package:provider/provider.dart';
 import '../../constants/constants.dart';
 import '../validation/validation.dart';
 import 'buttons.dart';
@@ -23,6 +25,7 @@ class CustomDialogBox extends StatefulWidget {
 class _CustomDialogBoxState extends State<CustomDialogBox> {
   @override
   Widget build(BuildContext context) {
+
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(Constants.padding),
@@ -34,6 +37,7 @@ class _CustomDialogBoxState extends State<CustomDialogBox> {
   }
 
   contentBox(context) {
+    final emailAndPasswordProvider = Provider.of<LoginBloc>(context);
     // Bloc loginBloc = context.read<LoginScreenBloc>();
     TextEditingController _emailController = TextEditingController();
     TextEditingController _passController = TextEditingController();
@@ -43,6 +47,7 @@ class _CustomDialogBoxState extends State<CustomDialogBox> {
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 500, minWidth: 300),
       child: Stack(
+
         children: <Widget>[
           SingleChildScrollView(
             child: Container(
@@ -120,7 +125,7 @@ class _CustomDialogBoxState extends State<CustomDialogBox> {
                       LoginOrSignUpPageButton(
                           function: () {
                             if(formKey.currentState!.validate()){
-                             Navigator.pushNamed(context, PageName.homeScreenBehaviour);
+                              emailAndPasswordProvider.add(LoginClickEvent(email: _emailController.text.toString(), password: _passController.text.toString()));
                             }
                           },
                           width: MediaQuery.of(context).size.width,
@@ -148,6 +153,19 @@ class _CustomDialogBoxState extends State<CustomDialogBox> {
                   child: Image.asset('assets/images/m_logo.png')),
             ),
           ),
+          BlocConsumer<LoginBloc,LoginState>(builder: (context, state) {
+            if(state is LoginScreenLoadingState){
+              return Center(child: CircularProgressIndicator(),);
+            }
+            return SizedBox();
+          }, listener: (context, state) {
+            if(state is LoginScreenLoadedState){
+              Navigator.pushNamed(context, PageName.homeScreenBehaviour);
+            }
+            if(state is LoginScreenErrorState){
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.error.toString())));
+            }
+          },)
         ],
       ),
     );

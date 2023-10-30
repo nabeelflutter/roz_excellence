@@ -1,18 +1,23 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rose_excellence_admin_panel_web1/routes/routes.dart';
-import 'package:rose_excellence_admin_panel_web1/view/screens/add_course_information_screen/add_course_information_screen.dart';
-import 'package:rose_excellence_admin_panel_web1/view/screens/add_course_screen/add_course_screen.dart';
-import 'package:rose_excellence_admin_panel_web1/view/screens/add_lesson_screen/add_lesson_screen.dart';
-import 'package:rose_excellence_admin_panel_web1/view/screens/fill_lesson_screen/fill_lesson_screen.dart';
+import 'package:rose_excellence_admin_panel_web1/test.dart';
 import 'package:rose_excellence_admin_panel_web1/view/screens/home_screen/home_screen.dart';
-import 'package:rose_excellence_admin_panel_web1/view/screens/home_screen/home_screen_behaviour.dart';
-import 'package:rose_excellence_admin_panel_web1/view/screens/view_lesson_screen/view_lesson_screen.dart';
-import 'test.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'package:rose_excellence_admin_panel_web1/view_model/login_bloc/login_bloc.dart';
 
-void main() {
+void main() async{
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
+  await Firebase.initializeApp(
+    options: FirebaseOptions(
+      apiKey: "AIzaSyASljnvY9UBQEDOEfPlHnWG2wXM4PD6u3c",
+      appId: "1:15144932025:web:21035d0d5114e17eb5c168",
+      projectId: "roseexcellence-d5e87", messagingSenderId: '15144932025',
+      storageBucket: "roseexcellence-d5e87.appspot.com",
+      authDomain: "roseexcellence-d5e87.firebaseapp.com",
+    ),
+  );
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -21,7 +26,9 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MultiBlocProvider(providers: [
+      BlocProvider(create: (context) => LoginBloc(),)
+    ], child: MaterialApp(
         debugShowCheckedModeBanner: false,
         onGenerateRoute: Routes.generateRoutes,
         title: 'Flutter Demo',
@@ -29,9 +36,9 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
         ),
-        home:  HomeScreen()
-        //initialRoute: HomeScreen.pageName,
-        );
+        home:   HomeScreen()
+      //initialRoute: HomeScreen.pageName,
+    ));
   }
 }
 

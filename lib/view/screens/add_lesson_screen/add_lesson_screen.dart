@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../constants/constants.dart';
 import '../../widget/textfields.dart';
@@ -22,16 +24,25 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
   bool readOnly = false;
   bool isAddItem = false;
   bool _isDisabled = false;
+  final ImagePicker picker = ImagePicker();
+  late VideoPlayerController _controller;
+  var pickedFile;
+  List<dynamic> videoList = [];
 
   @override
   void initState() {
     lessonDiscriptionController = TextEditingController();
     super.initState();
+    _controller = VideoPlayerController.asset(pickedFile?.path ?? '')
+      ..initialize().then((_) {
+        setState(() {});
+      });
   }
 
   @override
   void dispose() {
     lessonDiscriptionController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -373,7 +384,7 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
                                     children: [
                                       Container(
                                         height: height * .25,
-                                        width: width * .45,
+                                        width: width * .32,
                                         decoration: BoxDecoration(
                                             border: Border.all(
                                                 color: Constants.greyColorr)),
@@ -381,36 +392,74 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 2, vertical: 2),
                                           child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
-                                              Container(
-                                                height: height * .25,
-                                                decoration: const BoxDecoration(
-                                                    color: Colors.grey),
-                                                width: width * .10,
-                                                child: const Center(
-                                                  child: Icon(Icons.add),
+                                              GestureDetector(
+                                                onTap: () async {
+                                                  pickedFile =
+                                                      await picker.pickVideo(
+                                                          source: ImageSource
+                                                              .gallery);
+                                                  _controller =
+                                                      VideoPlayerController
+                                                          .asset(pickedFile
+                                                                  ?.path ??
+                                                              '')
+                                                        ..initialize()
+                                                            .then((_) {
+                                                          setState(() {});
+                                                        });
+                                                },
+                                                child: Container(
+                                                 // height: height * .25,
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                          color: Colors.grey),
+                                                  width: width * .10,
+                                                  child: const Center(
+                                                    child: Icon(Icons.add),
+                                                  ),
                                                 ),
                                               ),
                                               SizedBox(
-                                                width: width * .02,
-                                              ),
-                                              Expanded(
-                                                child: Container(
-                                                  decoration: const BoxDecoration(
-                                                      image: DecorationImage(
-                                                    image: AssetImage(
-                                                      'assets/images/privacy.webp',
+                                                width: width*.20,
+                                                child: Stack(
+                                                  fit: StackFit.expand,
+                                                  // alignment: Alignment.center,
+                                                  children: [
+                                                    _controller.value
+                                                            .isInitialized
+                                                        ? AspectRatio(
+                                                            aspectRatio:
+                                                                _controller
+                                                                    .value
+                                                                    .aspectRatio,
+                                                            child: VideoPlayer(
+                                                                _controller),
+                                                          )
+                                                        : Container(),
+                                                    GestureDetector(
+                                                      onTap: () {
+                                                        setState(() {
+                                                          _controller.value
+                                                                  .isPlaying
+                                                              ? _controller
+                                                                  .pause()
+                                                              : _controller
+                                                                  .play();
+                                                        });
+                                                      },
+                                                      child: Icon(
+                                                        _controller.value
+                                                                .isPlaying
+                                                            ? Icons.pause
+                                                            : Icons
+                                                                .play_arrow,
+                                                        color: Colors.white,
+                                                      ),
                                                     ),
-                                                    fit: BoxFit.fill,
-                                                  )),
-                                                  child: Center(
-                                                    child: Icon(
-                                                      Icons.play_circle,
-                                                      size: 40,
-                                                      color:
-                                                          Constants.greyColorr,
-                                                    ),
-                                                  ),
+                                                  ],
                                                 ),
                                               ),
                                             ],
@@ -434,12 +483,14 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
                               setState(() {
                                 videoTitleList
                                     .add(videoTitleController.text.toString());
+                                videoList.add(pickedFile);
                                 addItemList.add(customWidget(
+                                  controller: _controller,
                                     width: width,
                                     height: height,
-                                    videoTitle: 'Title',
-                                    videoSubTitle: 'Sub Title'));
-
+                                    videoTitle: videoTitleController.text,
+                                    aspect: _controller.value.aspectRatio,
+                                    videoSubTitle: videoSubtitleController.text));
                                 videoSubtitleController.clear();
                                 videoTitleController.clear();
                               });
@@ -501,41 +552,35 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
       {double? height,
       double? width,
       String? videoTitle,
-      String? videoSubTitle}) {
+      String? videoSubTitle, required aspect,required controller}) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Container(
-        height: height! * .20,
-        width: width! * .20,
+        // height: height! * .20,
+        // width: width! * .20,
         decoration: BoxDecoration(border: Border.all(color: Colors.grey)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: Container(
-                width: width! * .20,
-                decoration: const BoxDecoration(
-                    image: DecorationImage(
-                  image: AssetImage(
-                    // height:height!*.15,
-                    'assets/images/term.webp',
+              child:Stack(
+                alignment: Alignment.center,
+                children: [
+                  AspectRatio(
+                    aspectRatio:
+                    aspect,
+                    child: VideoPlayer(
+                        controller),
                   ),
-                  fit: BoxFit.fill,
-                )),
-                child: Center(
-                  child: Icon(
-                    Icons.play_circle,
-                    size: 40,
-                    color: Constants.greyColorr,
-                  ),
-                ),
+                  Icon(Icons.play_circle,color: Colors.white,)
+                ],
               ),
             ),
             SizedBox(
-              height: height * .01,
+              height: height! * .01,
             ),
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: width * .003),
+              padding: EdgeInsets.symmetric(horizontal: width! * .003),
               child: Text(
                 videoTitle!,
                 style: TextStyle(fontWeight: FontWeight.bold),

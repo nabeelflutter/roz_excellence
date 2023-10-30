@@ -33,8 +33,13 @@ class ViewUrlScreen extends StatelessWidget {
         ),
       ),
       body: const Center(
-        child: HtmlElementView(
-          viewType: '1',
+        child: Stack(
+          children: [
+            Center(child: CircularProgressIndicator(),),
+            HtmlElementView(
+              viewType: '1',
+            ),
+          ],
         ),
       ),
     );

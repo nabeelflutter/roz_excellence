@@ -1,77 +1,62 @@
-//
-// import 'package:flutter/material.dart';
-// import 'package:webviewx/webviewx.dart';
-// import 'dart:ui_web';
-// class We extends StatefulWidget {
-//   const We({super.key});
-//
-//   @override
-//   State<We> createState() => _WeState();
-// }
-//
-// class _WeState extends State<We> {
-//   late WebViewXController webviewController;
-//    @override
-//   void initState() {
-//     super.initState();
-//     webviewController = WebViewXController(
-//         initialContent: 'Loding...', initialSourceType: SourceType.URL, ignoreAllGestures: true);
-//   }
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(),
-//       body: Center(
-//         child: WebViewX(
-//           width: 500,
-//           height: 500,
-//           onWebViewCreated: (controller) => webviewController = controller,
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
-// import 'dart:io' if (dart.library.html) 'dart:ui' as ui;
-import 'dart:ui' as ui;
-import 'dart:html' as html;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'constants/constants.dart';
-class We extends StatelessWidget {
-  We() {
-    // ignore: undefined_prefixed_name
-    ui.platformViewRegistry.registerViewFactory('iframe', (int viewId) {
-      var iframe = html.IFrameElement();
-      iframe.src = 'https://www.africau.edu/';
-      return iframe;
-    });
-  }
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: InkWell(
-            onTap: () {
-              Navigator.pop(context);
-            },
-            child: Icon(
-              Icons.arrow_back,
-              color: Constants.wightColor,
-            )),
-        centerTitle: true,
-        backgroundColor: Constants.darkPink,
-        title: Text('Url',style: TextStyle(color: Constants.wightColor),),),
-      body: Container(
-          width:  double.infinity, height: double.infinity, child: HtmlElementView(viewType: 'iframe')),
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('Firebase Array in ListView'),
+        ),
+        body: FirebaseArrayListViewWidget(),
+      ),
+    );
+  }
+}
+
+class FirebaseArrayListViewWidget extends StatefulWidget {
+  @override
+  _FirebaseArrayListViewWidgetState createState() => _FirebaseArrayListViewWidgetState();
+}
+
+class _FirebaseArrayListViewWidgetState extends State<FirebaseArrayListViewWidget> {
+  List<dynamic> itemList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _getArrayItems();
+  }
+
+  Future<void> _getArrayItems() async {
+    try {
+      // Replace 'items' with your Firestore collection name and 'your_document_id' with the specific document ID.
+      DocumentSnapshot document = await FirebaseFirestore.instance.collection('items').doc('your_document_id').get();
+
+      // Access the 'item' field.
+      itemList = List.from(document['item']);
+
+      // Update the state to trigger a re-build of the widget with the updated array.
+      setState(() {});
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      itemCount: itemList.length,
+      itemBuilder: (context, index) {
+        return ListTile(
+          title: Text(itemList[index].toString()),
+        );
+      },
     );
   }
 }

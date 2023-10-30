@@ -1,31 +1,85 @@
-
 //S
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:rose_excellence_admin_panel_web1/model/add_course_information_model/add_course_information_model.dart';
 import 'package:rose_excellence_admin_panel_web1/routes/pages/pages.dart';
 import 'package:rose_excellence_admin_panel_web1/view/screens/add_course_screen/add_course_screen.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../constants/constants.dart';
 import '../../../static_data_lists/fill_lesson_lists/fill_lesson_lists.dart';
 
 class EditCourseScreen extends StatefulWidget {
-  const EditCourseScreen({super.key});
+  String? videoUrl = '';
+  String? courseid= '';
+  String? courseName= '';
+  String? courseTitle= '';
+  String? coursePrice= '';
+  String? courseDuration= '';
+  String? courseDescription= '';
+   EditCourseScreen({super.key, this.videoUrl,  this.courseid,  this.courseName,  this.courseTitle,  this.coursePrice,  this.courseDuration,  this.courseDescription});
 
   @override
   State<EditCourseScreen> createState() => _EditCourseScreenState();
 }
 
 class _EditCourseScreenState extends State<EditCourseScreen> {
+  late VideoPlayerController _controller;
+  bool isPlaying = false;
+
+  late Future<void> _initializeVideoPlayerFuture;
+  List<dynamic> lessonArray = [];
+  @override
+  void initState() {
+    super.initState();
+    _getArrayItems();
+    _controller = VideoPlayerController.networkUrl(
+      Uri.parse(
+        widget.videoUrl.toString(),
+      ),
+    );
+
+    // Initialize the controller and store the Future for later use.
+    _initializeVideoPlayerFuture = _controller.initialize();
+
+    // Use the controller to loop the video.
+    _controller.setLooping(true);
+  }
+
+  Future<void> _getArrayItems() async {
+    try {
+      DocumentSnapshot document = await FirebaseFirestore.instance.collection('Lessons').doc(widget.courseid).get();
+      lessonArray = List.from(document['lessons']);
+      setState(() {});
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+  @override
+  void dispose() {
+    // Ensure disposing of the VideoPlayerController to free up resources.
+    _controller.dispose();
+
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
-     final courseName = ModalRoute.of(context)!.settings.arguments as String ?;
+
+    CollectionReference collectionRef =
+        FirebaseFirestore.instance.collection('Lessons');
     return Scaffold(
       body: CustomScrollView(
         slivers: <Widget>[
           SliverAppBar(
-            title: Text(courseName.toString(),style: TextStyle(color: Constants.wightColor,fontWeight: FontWeight.bold),),
+            title: Text(
+              widget.courseName.toString(),
+              style: TextStyle(
+                  color: Constants.wightColor, fontWeight: FontWeight.bold),
+            ),
             pinned: true,
             backgroundColor: Constants.darkPink,
             leading: InkWell(
@@ -36,7 +90,6 @@ class _EditCourseScreenState extends State<EditCourseScreen> {
                 Icons.arrow_back,
                 color: Constants.wightColor,
               ),
-
             ),
             iconTheme: IconThemeData(color: Constants.wightColor),
             centerTitle: true,
@@ -74,17 +127,39 @@ class _EditCourseScreenState extends State<EditCourseScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: Padding(
-                    padding:  EdgeInsets.symmetric(horizontal: width*.05),
-                    child: Container(
-                      child: Center(child: Icon(Icons.play_circle,size: 40,color: Constants.greyColorr,),),
-                      height: height*.35,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Constants.greyColorr),
-                        image: const DecorationImage(
-                            image: AssetImage(
-                              'assets/images/teacher.webp',
-                            ),fit: BoxFit.fill),),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        if (isPlaying) {
+                          _controller.pause();
+                        } else {
+                          _controller.play();
+                        }
+                        isPlaying = !isPlaying;
+                      });
+                    },
+                    child: SizedBox(
+                      height: 200,
+                      child: AspectRatio(
+                        aspectRatio: _controller.value.aspectRatio,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            VideoPlayer(_controller),
+                            isPlaying
+                                ? Icon(
+                                    Icons.pause,
+                                    size: 50,
+                                    color: Colors.white,
+                                  )
+                                : Icon(
+                                    Icons.play_arrow,
+                                    size: 50,
+                                    color: Colors.white,
+                                  ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -99,20 +174,20 @@ class _EditCourseScreenState extends State<EditCourseScreen> {
                         customViewContainer(
                           height: height * 0.09,
                           text: 'Title :  ',
-                          width: width*.35,
-                          value: ' Flutter',
+                          width: width * .35,
+                          value: widget.courseTitle,
                         ),
                         customViewContainer(
                           height: height * 0.09,
                           text: 'Price :  ',
-                          width: width*.35,
-                          value: " \$5",
+                          width: width * .35,
+                          value: widget.coursePrice,
                         ),
                         customViewContainer(
                           height: height * 0.09,
                           text: 'Duration :  ',
-                          width: width*.35,
-                          value: ' 10 days',
+                          width: width * .35,
+                          value: widget.courseDuration,
                         ),
                       ],
                     ),
@@ -128,7 +203,7 @@ class _EditCourseScreenState extends State<EditCourseScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding:  EdgeInsets.symmetric(horizontal: width*.04),
+              padding: EdgeInsets.symmetric(horizontal: width * .04),
               child: const Text(
                 'Description',
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -147,10 +222,10 @@ class _EditCourseScreenState extends State<EditCourseScreen> {
                 decoration: BoxDecoration(
                   border: Border.all(color: Constants.greyColorr),
                 ),
-                child: const Padding(
+                child: Padding(
                   padding: EdgeInsets.all(8.0),
                   child: Text(
-                    "There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even slightly believable. If you are going to use a passage of Lorem Ipsum, you need to be sure there isn't anything embarrassing hidden in the middle of text. All the Lorem Ipsum generators on the Internet tend to repeat predefined chunks as necessary, making this the first true generator on the Internet. It uses a dictionary of over 200 Latin words, combined with a handful of model sentence structures, to generate Lorem Ipsum which looks reasonable. The generated Lorem Ipsum is therefore always free from repetition, injected humour, or non-characteristic words etc.",
+                    widget.courseDescription.toString(),
                   ),
                 ),
               ),
@@ -163,7 +238,7 @@ class _EditCourseScreenState extends State<EditCourseScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding:  EdgeInsets.symmetric(horizontal: width*.04),
+              padding: EdgeInsets.symmetric(horizontal: width * .04),
               child: const Text(
                 'Lessons',
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -175,9 +250,19 @@ class _EditCourseScreenState extends State<EditCourseScreen> {
               height: height * 0.01,
             ),
           ),
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-                  (context, index) {
+          StreamBuilder(stream: FirebaseFirestore.instance.collection('Lessons').snapshots(), builder: (context, snapshot) {
+            if(snapshot.hasError){
+              return  SliverToBoxAdapter(
+                child: Center(child: Text('Something went wrong'),)
+              );
+            }
+            else if(!snapshot.hasData){
+              return SliverToBoxAdapter(
+                child: Center(child: CircularProgressIndicator(),)
+              );
+            }
+            return SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
                 return Padding(
                   padding: EdgeInsets.symmetric(horizontal: width * 0.03),
                   child: Card(
@@ -187,7 +272,7 @@ class _EditCourseScreenState extends State<EditCourseScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           GestureDetector(
-                            onTap:(){
+                            onTap: () {
                               Navigator.pushNamed(
                                 context,
                                 PageName.viewLessonScreen,
@@ -258,21 +343,20 @@ class _EditCourseScreenState extends State<EditCourseScreen> {
                       ),
                       leading: fetchFillLessonList[index].icon,
                       title: Text(
-                        fetchFillLessonList[index].bookName,
+                        lessonArray[index],
                         style: TextStyle(color: Constants.wightColor),
                       ),
                     ),
                   ),
                 );
-              },
-              childCount: fetchFillLessonList.length,
-            ),
-          ),
+              }, childCount:lessonArray.length ),
+            );
+          },)
         ],
-      ),
+      )
     );
   }
-
+//
   Widget customViewContainer(
       {double? height, double? width, String? text, String? value}) {
     return Padding(

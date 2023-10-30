@@ -28,8 +28,18 @@ class ViewUrlScreen1 extends StatelessWidget {
         centerTitle: true,
         backgroundColor: Constants.darkPink,
         title: Text('Privacy',style: TextStyle(color: Constants.wightColor),),),
-      body: Container(
-          width:  double.infinity, height: double.infinity, child: HtmlElementView(viewType: '2')),
+      body:  Center(
+        child: Stack(
+          children: [
+            Center(child: CircularProgressIndicator(),),
+            Container(height:
+              double.infinity,width: double.infinity,color: Colors.blueAccent,),
+            HtmlElementView(
+              viewType: '2',
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

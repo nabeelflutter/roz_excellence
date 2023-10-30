@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 
 import '../../../constants/constants.dart';
@@ -41,58 +43,71 @@ class _AllStudentsScreenState extends State<AllStudentsScreen> {
           child: Padding(
             padding: EdgeInsets.symmetric(
                 vertical: height * .03, horizontal: width * .03),
-            child: GridView.builder(
-              itemCount: fetchListOfModel.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-              ),
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(context, PageName.allStudentsViewScreen,
-                        arguments: fetchAllStudentsList[index].imagePath);
-                  },
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        height: height * .30,
-                        width: width * .20,
-                        decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: AssetImage(
-                                fetchAllStudentsList[index].imagePath,
+            child: StreamBuilder(
+              stream: FirebaseFirestore.instance.collection('Users').snapshots(),
+              builder: (context, snapshot) {
+              if(!snapshot.hasData){
+                return Center(child: CircularProgressIndicator(),);
+              }
+              else if(snapshot.hasError){
+                return Center(child: Text('Something went wrong'),);
+              }
+              return GridView.builder(
+                itemCount: snapshot.data!.docs.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                ),
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, PageName.allStudentsViewScreen,
+                          arguments: ({
+                            'name':snapshot.data!.docs[index].get('name'),
+                            'email':snapshot.data!.docs[index].get('email')
+                          }));
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          height: height * .30,
+                          width: width * .20,
+                          decoration: BoxDecoration(
+                              image: DecorationImage(
+                                image: AssetImage(
+                                  fetchAllStudentsList[index].imagePath,
+                                ),
+                                fit: BoxFit.fill,
+                              )),
+                        ),
+                        SizedBox(
+                          height: height * .02,
+                        ),
+                        Text(
+                          snapshot.data!.docs[index].get('name'),
+                          style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 16),
+                        ),
+                        SizedBox(height: height*.003,),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text( fetchAllStudentsList[index].registration.toString()  ,style: TextStyle(fontWeight: FontWeight.bold),),
+                            SizedBox(width: width*.02,),
+                            Padding(
+                              padding:  EdgeInsets.symmetric(horizontal: width*.05),
+                              child: Text(
+                                fetchAllStudentsList[index].date.toString(),
+                                style: const TextStyle(color: Colors.black),
                               ),
-                              fit: BoxFit.fill,
-                            )),
-                      ),
-                      SizedBox(
-                        height: height * .02,
-                      ),
-                      Text(
-                        fetchAllStudentsList[index].name,
-                        style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 16),
-                      ),
-                      SizedBox(height: height*.003,),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text( fetchAllStudentsList[index].registration.toString()  ,style: TextStyle(fontWeight: FontWeight.bold),),
-                          SizedBox(width: width*.02,),
-                          Padding(
-                            padding:  EdgeInsets.symmetric(horizontal: width*.05),
-                            child: Text(
-                              fetchAllStudentsList[index].date.toString(),
-                              style: const TextStyle(color: Colors.black),
                             ),
-                          ),
-                        ],
-                      )
-                    ],
-                  ),
-                );
-              },
-            ),
+                          ],
+                        )
+                      ],
+                    ),
+                  );
+                },
+              );
+            },)
           ),
         ));
   }

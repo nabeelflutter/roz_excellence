@@ -13,7 +13,7 @@ class _AllStudentsViewScreenState extends State<AllStudentsViewScreen> {
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
-    final imagePath = ModalRoute.of(context)!.settings.arguments as String ?;
+    final userdata = ModalRoute.of(context)!.settings.arguments as Map<String,dynamic> ?;
 
     return  Scaffold(
       appBar: AppBar(
@@ -48,7 +48,7 @@ class _AllStudentsViewScreenState extends State<AllStudentsViewScreen> {
                        border: Border.all(color: Constants.greyColorr),
                        image:  DecorationImage(
                            image: AssetImage(
-                             imagePath!,
+                             'assets/images/all.webp',
                            ),
                            fit: BoxFit.fill
                        )
@@ -57,12 +57,12 @@ class _AllStudentsViewScreenState extends State<AllStudentsViewScreen> {
                    height:height*.10,
                    decoration: BoxDecoration(
                      border: Border.all(color: Constants.greyColorr),
-                   ),child: Center(child: Text('Patrick',style: TextStyle(fontWeight: FontWeight.bold),),),),
+                   ),child: Center(child: Text(userdata!['name'],style: TextStyle(fontWeight: FontWeight.bold),),),),
                  Container(
                    height:height*.10,
                    decoration: BoxDecoration(
                      border: Border.all(color: Constants.greyColorr),
-                   ),child: const Center(child: Text('starling@gmail.com',style: TextStyle(fontWeight: FontWeight.bold),)),),
+                   ),child:  Center(child: Text(userdata['email'].toString(),style: TextStyle(fontWeight: FontWeight.bold),)),),
 
                  Container(
                    height:height*.10,

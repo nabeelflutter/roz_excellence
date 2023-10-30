@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:rose_excellence_admin_panel_web1/repository/auth_model.dart';
 import 'package:rose_excellence_admin_panel_web1/routes/pages/pages.dart';
+import 'package:rose_excellence_admin_panel_web1/view/screens/home_screen/home_screen.dart';
 
 import '../../../constants/constants.dart';
 
@@ -42,29 +45,43 @@ class HomeScreenBehaviour extends StatelessWidget {
             ),
           ),
           SizedBox(width: 20,),
-          Container(
-            margin: EdgeInsets.all(5),
-            height: 40,
-            width: 110,
-            decoration: BoxDecoration(
-                boxShadow: [
-                  BoxShadow(
-                    color: Constants.darkPink.withOpacity(0.1),
-                    spreadRadius: 4,
-                    blurRadius: 10,
-                    offset: Offset(0, 3),
-                  )
-                ],
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8)),
-            child: Center(
-                child: Text(
-                  'Log Out',
-                  style: GoogleFonts.playfairDisplay().copyWith(
-                      color: Constants.darkPink,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold),
-                )),
+          InkWell(
+            onTap: (){
+              print('a');
+              AuthModel().logout().then((value) {
+                Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                      const HomeScreen(),
+                    ),
+                        (route) => false);
+              });
+            },
+            child: Container(
+              margin: EdgeInsets.all(5),
+              height: 40,
+              width: 110,
+              decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Constants.darkPink.withOpacity(0.1),
+                      spreadRadius: 4,
+                      blurRadius: 10,
+                      offset: Offset(0, 3),
+                    )
+                  ],
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8)),
+              child: Center(
+                  child: Text(
+                    'Log Out',
+                    style: GoogleFonts.playfairDisplay().copyWith(
+                        color: Constants.darkPink,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold),
+                  )),
+            ),
           ),
         ],
         backgroundColor: Constants.darkPink,
