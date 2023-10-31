@@ -1,5 +1,6 @@
 import 'dart:html';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,7 +12,8 @@ import '../../../constants/constants.dart';
 import '../../widget/textfields.dart';
 
 class AddLessonScreen extends StatefulWidget {
-  const AddLessonScreen({super.key});
+
+   AddLessonScreen({super.key});
 
   @override
   State<AddLessonScreen> createState() => _AddLessonScreenState();
@@ -35,6 +37,7 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
   List<dynamic> videoList = [];
   var videoUrl;
   var videoUrlPath;
+  String? lessonDataId;
   UploadTask? task;
   bool isChecked = false;
   Future uploadVideo() async {
@@ -86,7 +89,10 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
+    final userdata = ModalRoute.of(context)!.settings.arguments as Map<String,dynamic> ?;
 
+    print('${userdata!['CourseId']}MMMMMMMMMMMMMMMMMMMMMM');
+    // print('${widget.lessonId}LLLLLLLLLLLLLLLLLLLLLLLL');
     return Scaffold(
       appBar: AppBar(
         leading: InkWell(
@@ -266,7 +272,18 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
                           padding: EdgeInsets.symmetric(
                               vertical: height * .02, horizontal: width * .02),
                           child: GestureDetector(
-                            onTap: () {
+                            onTap: () async {
+                              lessonDataId = FirebaseFirestore.instance.collection('Lessons').doc().collection('LessonData').doc().id;
+                              await  FirebaseFirestore.instance.collection('Lessons').doc(userdata['CourseId']).collection('LessonData').doc(userdata['LessonId']).set(
+                                  {
+                                    'videoId' : lessonDataId,
+                                    'lessonName' : userdata['lessonName'],
+                                    'courseId' : userdata['CourseId'],
+                                    'lessonId' : userdata['LessonId'],
+                                    'lessonTitle': lessonTitleController.text.toString(),
+                                    'lessonSubTitle': lessonSubtitleController.text.toString(),
+                                    'lessonDiscription': lessonDiscriptionController.text.toString()
+                                  });
                               setState(() {
                                 readOnly = true;
                               });
@@ -504,22 +521,36 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
                           padding: EdgeInsets.symmetric(
                               vertical: height * .02, horizontal: width * .02),
                           child: GestureDetector(
-                            onTap: () {
-                              isAddItem = true;
-                              setState(() {
-                                videoTitleList
-                                    .add(videoTitleController.text.toString());
-                                videoList.add(pickedFile);
-                                addItemList.add(customWidget(
-                                  controller: _controller,
-                                    width: width,
-                                    height: height,
-                                    videoTitle: videoTitleController.text,
-                                    aspect: _controller.value.aspectRatio,
-                                    videoSubTitle: videoSubtitleController.text));
-                                videoSubtitleController.clear();
-                                videoTitleController.clear();
+                            onTap: () async {
+                              String videoId = FirebaseFirestore.instance.collection('videos').doc().id;
+                              await FirebaseFirestore.instance.collection('videos').doc(videoId).set({
+                                'courseId': userdata['CourseId'],
+                                'videoId':videoId,
+                                'lessonId': userdata['LessonId'],
+                                'lessonName': userdata['lessonName'],
+                                'lessonDataId':lessonDataId,
+                                'videoTitle': videoTitleController.text.toString(),
+                                'videoSubTitle': videoSubtitleController.text.toString(),
+                                'videoUrl': videoUrlPath.toString(),
+                              }).whenComplete(() {
+                                isAddItem = true;
+                                setState(() {
+                                  videoTitleList
+                                      .add(videoTitleController.text.toString());
+                                  videoList.add(pickedFile);
+                                  addItemList.add(customWidget(
+                                    controller: _controller,
+                                      width: width,
+                                      height: height,
+                                      videoTitle: videoTitleController.text,
+                                      aspect: _controller.value.aspectRatio,
+                                      videoSubTitle: videoSubtitleController.text));
+                                  videoSubtitleController.clear();
+                                  videoTitleController.clear();
+                                  isChecked = false;
+                                });
                               });
+
                             },
                             child: Container(
                               decoration: BoxDecoration(
@@ -527,38 +558,40 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
                                       Border.all(color: Constants.greyColorr),
                                   borderRadius: BorderRadius.circular(10),
                                   color: Constants.greyColorr),
-                              child: const Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Text(
-                                    'S',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16),
-                                  ),
-                                  Text('U',
+                              child:task == null?const Center(
+                                child: Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    Text(
+                                      'S',
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 16)),
-                                  Text('B',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16)),
-                                  Text('M',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16)),
-                                  Text('I',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16)),
-                                  Text('T',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16)),
-                                ],
-                              ),
+                                          fontSize: 16),
+                                    ),
+                                    Text('U',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16)),
+                                    Text('B',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16)),
+                                    Text('M',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16)),
+                                    Text('I',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16)),
+                                    Text('T',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16)),
+                                  ],
+                                ),
+                              ): Center(child: CircularProgressIndicator()),
                             ),
                           ),
                         ),

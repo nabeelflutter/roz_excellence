@@ -13,4 +13,7 @@ class AuthModel{
     authentication!.signOut();
     return Future.delayed(Duration.zero);
   }
+
+
+
 }

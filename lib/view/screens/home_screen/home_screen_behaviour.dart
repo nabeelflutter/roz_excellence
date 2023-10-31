@@ -98,7 +98,7 @@ class HomeScreenBehaviour extends StatelessWidget {
                 children: [
                   GestureDetector(
                     onTap:(){
-                      Navigator.pushNamed(context, PageName.addCourseScreen);
+                      Navigator.pushNamed(context, PageName.courseScreen);
                     },
                     child: customContainer(
                         imagePath: 'assets/images/course.webp',

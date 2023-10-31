@@ -1,9 +1,9 @@
 class PageName {
   static const String homeScreenBehaviour = "/homeScreenBehaviour";
-  static const String addCourseScreen = "/addCourseScreen";
+  static const String courseScreen = "/courseScreen";
   static const String addCourseInformationScreen = "/addCourseInformationScreen";
   static const String fillLessonScreen = "/fillLessonScreen";
-  static const String editCourseScreen = "/editCourseScreen";
+  static const String viewCourseScreen = "/viewCourseScreen";
   static const String addLessonScreen = "/addLessonScreen";
   static const String viewLessonScreen = "/viewLessonScreen";
   static const String playVideoScreen = "/playVideoScreen";

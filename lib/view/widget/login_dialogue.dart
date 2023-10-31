@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rose_excellence_admin_panel_web1/routes/pages/pages.dart';
@@ -125,13 +126,30 @@ class _CustomDialogBoxState extends State<CustomDialogBox> {
                       LoginOrSignUpPageButton(
                           function: () {
                             if(formKey.currentState!.validate()){
-                              emailAndPasswordProvider.add(LoginClickEvent(email: _emailController.text.toString(), password: _passController.text.toString()));
+                              if(_emailController.text.toString() == 'roseexcellenceadmin@gmail.com' &&_passController.text.toString() == '12345678' ){
+                                emailAndPasswordProvider.add(LoginClickEvent(email: _emailController.text.toString(), password: _passController.text.toString()));
+                              }
                             }
                           },
                           width: MediaQuery.of(context).size.width,
                           color: Constants.darkPink,
                           height: 40,
-                          buttonText: 'Login',
+                          buttonText:  BlocConsumer<LoginBloc,LoginState>(builder: (context, state) {
+                            if(state is LoginInitial){
+                              return Text('Login',style: TextStyle(color: Constants.wightColor,fontWeight: FontWeight.bold),);
+                            }
+                            if(state is LoginScreenLoadingState){
+                              return Center(child: CircularProgressIndicator(color: Constants.wightColor,),);
+                            }
+                            return SizedBox();
+                          }, listener: (context, state) {
+                            if(state is LoginScreenLoadedState){
+                              Navigator.pushNamed(context, PageName.homeScreenBehaviour);
+                            }
+                            if(state is LoginScreenErrorState){
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.error.toString())));
+                            }
+                          },) ,
                           textColor: Colors.white,
                           borderColor: Constants.darkPink,
                           backgroundColor: Constants.darkPink),
@@ -153,19 +171,7 @@ class _CustomDialogBoxState extends State<CustomDialogBox> {
                   child: Image.asset('assets/images/m_logo.png')),
             ),
           ),
-          BlocConsumer<LoginBloc,LoginState>(builder: (context, state) {
-            if(state is LoginScreenLoadingState){
-              return Center(child: CircularProgressIndicator(),);
-            }
-            return SizedBox();
-          }, listener: (context, state) {
-            if(state is LoginScreenLoadedState){
-              Navigator.pushNamed(context, PageName.homeScreenBehaviour);
-            }
-            if(state is LoginScreenErrorState){
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.error.toString())));
-            }
-          },)
+
         ],
       ),
     );

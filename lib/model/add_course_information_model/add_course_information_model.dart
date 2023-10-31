@@ -1,6 +1,6 @@
 class AddCourseInformationModel {
   String courseName;
-  String id;
+  String courseId;
   String courseTitle;
   String coursePrice;
   String courseDescription;
@@ -8,7 +8,7 @@ class AddCourseInformationModel {
   String courseDuration;
 
   AddCourseInformationModel({
-    required this.id,
+    required this.courseId,
     required this.courseName,
     required this.courseTitle,
     required this.coursePrice,
@@ -25,19 +25,19 @@ class AddCourseInformationModel {
       'courseDescription': courseDescription,
       'videoUrl': videoUrl,
       'courseDuration': courseDuration,
-      'id':id
+      'courseId':courseId
     };
   }
 
   factory AddCourseInformationModel.fromMap(Map<String, dynamic> map) {
     return AddCourseInformationModel(
-      id:map['id'],
-      courseName: map['courseName'],
-      courseTitle: map['courseTitle'],
-      coursePrice: map['coursePrice'],
-      courseDescription: map['courseDescription'],
-      videoUrl: map['videoUrl'],
-      courseDuration: map['courseDuration'],
+      courseId:map['courseId'] ??'',
+      courseName: map['courseName']??'',
+      courseTitle: map['courseTitle']??'',
+      coursePrice: map['coursePrice']??'',
+      courseDescription: map['courseDescription']??'',
+      videoUrl: map['videoUrl']??'',
+      courseDuration: map['courseDuration']??'',
     );
   }
 }

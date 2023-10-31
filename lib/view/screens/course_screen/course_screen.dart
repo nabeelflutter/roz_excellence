@@ -7,15 +7,16 @@ import '../../../constants/constants.dart';
 import '../../../static_data_lists/add_course_list/add_course_list.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../edit_course_screen/edit_course_screen.dart';
-class AddCoursesScreen extends StatefulWidget {
-  const AddCoursesScreen({super.key});
+import '../view_course_screen/view_course_screen.dart';
+
+class CoursesScreen extends StatefulWidget {
+  const CoursesScreen({super.key});
 
   @override
-  State<AddCoursesScreen> createState() => _AddCoursesScreenState();
+  State<CoursesScreen> createState() => _CoursesScreenState();
 }
 
-class _AddCoursesScreenState extends State<AddCoursesScreen> {
+class _CoursesScreenState extends State<CoursesScreen> {
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -59,7 +60,7 @@ class _AddCoursesScreenState extends State<AddCoursesScreen> {
                 return Center(child:Text('Something went wrong'));
               }
               else if(!snapshot.hasData){
-                return Center(child:CircularProgressIndicator());
+                return Center(child: Text('No data availabe'));
               }
               List<AddCourseInformationModel> models = snapshot.data!.docs.map((QueryDocumentSnapshot doc) {
                 return AddCourseInformationModel.fromMap(doc.data() as Map<String, dynamic>);
@@ -74,7 +75,8 @@ class _AddCoursesScreenState extends State<AddCoursesScreen> {
                   AddCourseInformationModel model = models[index];
                   return GestureDetector(
                     onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => EditCourseScreen(courseid: 'OD81e89ohl6IOzNFr2m9',videoUrl: model.videoUrl, courseName: model.courseName, courseTitle: model.courseTitle, coursePrice: model.coursePrice, courseDuration: model.courseDuration, courseDescription: model.courseDescription,),));
+
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => ViewCourseScreen(videoUrl: model.videoUrl,courseId: model.courseId),));
                     },
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

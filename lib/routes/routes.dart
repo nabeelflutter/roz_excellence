@@ -1,19 +1,19 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:rose_excellence_admin_panel_web1/routes/pages/pages.dart';
-import 'package:rose_excellence_admin_panel_web1/view/screens/edit_course_screen/edit_course_screen.dart';
 import 'package:rose_excellence_admin_panel_web1/view/screens/home_screen/home_screen.dart';
+import 'package:rose_excellence_admin_panel_web1/view/screens/view_course_screen/view_course_screen.dart';
 import '../view/screens/Conversation_screen/Conversation_screen.dart';
 import '../view/screens/View_url_screen/View_url_screen.dart';
 import '../view/screens/View_url_screen/View_url_screen1.dart';
-import '../view/screens/add_course_information_screen/add_course_information_screen.dart';
-import '../view/screens/add_course_screen/add_course_screen.dart';
+import '../view/screens/add_course_information_screen/add_course_info.dart';
 import '../view/screens/add_lesson_screen/add_lesson_screen.dart';
 import '../view/screens/add_new_admin_screen/add_new_admin_screen.dart';
 import '../view/screens/admin_and_editors_screen/admin_and_editor_screen.dart';
 import '../view/screens/all_students_screen/all_students_screen.dart';
 import '../view/screens/all_students_view/all_students_view.dart';
 import '../view/screens/assignments_screen/assignments_screen.dart';
+import '../view/screens/course_screen/course_screen.dart';
 import '../view/screens/enrolled_student_screen/enrolled_student_screen.dart';
 import '../view/screens/enrolled_student_view_screen/enrolled_student_view_screen.dart';
 import '../view/screens/fill_lesson_screen/fill_lesson_screen.dart';
@@ -32,9 +32,9 @@ class Routes {
           builder: (context) =>  HomeScreenBehaviour(),
             settings: routeSettings
         );
-      case PageName.addCourseScreen:
+      case PageName.courseScreen:
         return MaterialPageRoute(
-          builder: (context) => const AddCoursesScreen(),
+          builder: (context) => const CoursesScreen(),
           settings: routeSettings
         );
       case PageName.addCourseInformationScreen:
@@ -52,12 +52,12 @@ class Routes {
           builder: (context) => const FillLessonScreen(),
             settings: routeSettings
         );
-      case PageName.editCourseScreen:
+      case PageName.viewCourseScreen:
         return MaterialPageRoute(
-          builder: (context) =>  EditCourseScreen(),
+          builder: (context) =>  ViewCourseScreen(),
           settings: routeSettings
         );
-      case PageName.addLessonScreen:
+     case PageName.addLessonScreen:
         return MaterialPageRoute(
             builder: (context) =>  AddLessonScreen(),
             settings: routeSettings
