@@ -1,23 +1,18 @@
-import 'dart:convert';
-import 'dart:html';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:uuid/uuid.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
+import 'dart:html' as html;
 import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
-import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../constants/constants.dart';
 import '../../../model/add_course_information_model/add_course_information_model.dart';
 import '../../widget/textfields.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'dart:io';
 class AddCourseInformationScreen extends StatefulWidget {
   const AddCourseInformationScreen({super.key});
 
@@ -39,18 +34,53 @@ class _AddCourseInformationScreenState
   late TextEditingController categoryController;
   late TextEditingController subcategoryTitle;
   late VideoPlayerController _controller;
+  File? file;
   Uuid uuid = Uuid();
+  Uuid uuid1 = Uuid();
   var videoUrlPath;
   var videoUrl;
-  bool isChecked = false;
+
+  var imageUrlPath;
+  var imageUrl;
+  bool isCheckedVideo = false;
+  bool isCheckedImage = false;
   UploadTask? task;
+  UploadTask? taskimage;
   String? videoPath;
+  Uint8List? selectImageInByte;
+  Future uploadImage() async {
+    html.FileUploadInputElement input = html.FileUploadInputElement()..accept = 'Images/*';
+    input.click();
+    input.onChange.listen((event) {
+      imageUrl = input.files!.first;
+      final reader = html.FileReader();
+      reader.readAsDataUrl(imageUrl);
+      reader.onLoadEnd.listen((event) {
+        Reference reference = FirebaseStorage.instance
+            .ref()
+            .child('Images/')
+            .child(uuid1.v4().toString());
+        setState(() {
+          taskimage = reference.putBlob(imageUrl);
+        });
+        taskimage!.whenComplete(() {
+          reference.getDownloadURL().then((url) {
+            imageUrlPath = url;
+          });
+          setState(() {
+            isCheckedImage = true;
+            taskimage = null;
+          });
+        });
+      });
+    });
+  }
   Future uploadVideo() async {
-    FileUploadInputElement input = FileUploadInputElement()..accept = 'video/*';
+    html.FileUploadInputElement input = html.FileUploadInputElement()..accept = 'video/*';
     input.click();
     input.onChange.listen((event) {
       videoUrl = input.files!.first;
-      final reader = FileReader();
+      final reader = html.FileReader();
       reader.readAsDataUrl(videoUrl);
       reader.onLoadEnd.listen((event) {
         Reference reference = FirebaseStorage.instance
@@ -65,7 +95,7 @@ class _AddCourseInformationScreenState
             videoUrlPath = url;
           });
           setState(() {
-            isChecked = true;
+            isCheckedVideo = true;
             task = null;
           });
         });
@@ -127,52 +157,66 @@ class _AddCourseInformationScreenState
         actions: [
           InkWell(
             onTap: () async {
-              if(isChecked){
-                String courseId=FirebaseFirestore.instance.collection('Courses').doc().id;
-                await FirebaseFirestore.instance.collection('Courses').doc(courseId).set({
+              print('${imageUrl}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>pp');
+              if (isCheckedVideo && task == null && taskimage == null) {
+                String courseId =
+                    FirebaseFirestore.instance.collection('Courses').doc().id;
+                await FirebaseFirestore.instance
+                    .collection('Courses')
+                    .doc(courseId)
+                    .set({
                   'courseId': courseId,
                   'courseName': courseNameController.text,
                   'courseTitle': courseTitleController.text,
                   'coursePrice': coursePriceController.text,
                   'courseDescription': courseDiscriptionController.text,
                   'videoUrl': videoUrlPath.toString(),
-                  'courseDuration': courseDurationController.text
+                  'courseDuration': courseDurationController.text,
+                  'courseImage': imageUrlPath.toString(),
                 });
                 Future.forEach(subCategoryControllers, (element) async {
-                  String lessonId=FirebaseFirestore.instance.collection('Lessons').doc().id;
-                  await  FirebaseFirestore.instance.collection('Lessons').doc(courseId).collection('LessonData').doc(lessonId).set(
-                      {
-                        'lessonName' : element.text,
-                        'courseId' : courseId,
-                        'lessonId' : lessonId
-                      });
+                  String lessonId =
+                      FirebaseFirestore.instance.collection('Lessons').doc().id;
+                  await FirebaseFirestore.instance
+                      .collection('Lessons')
+                      .doc(courseId)
+                      .collection('LessonData')
+                      .doc(lessonId)
+                      .set({
+                    'lessonName': element.text,
+                    'courseId': courseId,
+                    'lessonId': lessonId
+                  });
                 });
                 Navigator.pop(context);
+
+              } else {
+                print('Sorry your data is not submitted please try again');
               }
             },
-
-
-
             child: Container(
               margin: EdgeInsets.all(5),
               height: 40,
               width: 110,
-              decoration: BoxDecoration(boxShadow: [
-                BoxShadow(
-                  color: Constants.darkPink.withOpacity(0.1),
-                  spreadRadius: 4,
-                  blurRadius: 10,
-                  offset: Offset(0, 3),
-                )
-              ], color: Colors.white, borderRadius: BorderRadius.circular(8)),
+              decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Constants.darkPink.withOpacity(0.1),
+                      spreadRadius: 4,
+                      blurRadius: 10,
+                      offset: Offset(0, 3),
+                    )
+                  ],
+                  color: task == null ? Colors.white : Colors.grey,
+                  borderRadius: BorderRadius.circular(8)),
               child: Center(
-                  child: task == null?Text(
+                  child: Text(
                 'Done',
                 style: GoogleFonts.playfairDisplay().copyWith(
                     color: Constants.darkPink,
                     fontSize: 20,
                     fontWeight: FontWeight.bold),
-              ):CircularProgressIndicator()),
+              )),
             ),
           ),
         ],
@@ -282,10 +326,7 @@ class _AddCourseInformationScreenState
               SizedBox(
                 height: height * .02,
               ),
-              const Text(
-                'Add Intro Video',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-              ),
+
               Row(
                 children: [
                   Padding(
@@ -295,7 +336,7 @@ class _AddCourseInformationScreenState
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Container(
-                          height: height * .25,
+                          height: height * .30,
                           width: width * .32,
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
@@ -303,26 +344,75 @@ class _AddCourseInformationScreenState
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                GestureDetector(
-                                  onTap: () async {
-                                    uploadVideo();
-                                  },
-                                  child: Container(
-                                    // height: height * .25,
-                                    decoration:
-                                        const BoxDecoration(color: Colors.grey),
-                                    width: width * .10,
-                                    child:  Center(
-                                      child: Stack(
-                                        alignment: Alignment.center,
-                                        children: [
-                                          isChecked == true ?Icon(Icons.done,color: Colors.white,size: 60,):Icon(Icons.add),
-                                          buildProgress()
-                                        ],
+                                Column(
+                                  children: [
+                                    const Text(
+                                      'Add Intro Video',
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () async {
+                                        uploadVideo();
+                                      },
+                                      child: Container(
+                                        // height: height * .25,
+                                        decoration:
+                                            const BoxDecoration(color: Colors.grey),
+                                        width: width * .10,
+                                        height: height*.20,
+                                        child: Center(
+                                          child: Stack(
+                                            alignment: Alignment.center,
+                                            children: [
+                                              isCheckedVideo == true
+                                                  ? const Icon(
+                                                      Icons.done,
+                                                      color: Colors.white,
+                                                      size: 60,
+                                                    )
+                                                  : Icon(Icons.add),
+                                              buildProgress()
+                                            ],
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
+                                  ],
                                 ),
+                                Column(
+                                  children: [
+                                    const Text(
+                                      'Add Image',
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                                    ),
+                                    InkWell(
+                                      onTap: (){
+                                        uploadImage();
+                                      },
+                                      child: Container(
+                                        decoration:
+                                        const BoxDecoration(color: Colors.grey),
+                                        width: width * .10,
+                                        height: height*.20,
+                                        child: Center(
+                                          child: Stack(
+                                            alignment: Alignment.center,
+                                            children: [
+                                              isCheckedImage == true
+                                                  ? const Icon(
+                                                Icons.done,
+                                                color: Colors.white,
+                                                size: 60,
+                                              )
+                                                  : Icon(Icons.add),
+                                              buildProgressForImage()
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
                               ],
                             ),
                           ),
@@ -441,6 +531,7 @@ class _AddCourseInformationScreenState
       },
     );
   }
+
   Widget buildProgress() {
     if (task != null) {
       return StreamBuilder<TaskSnapshot>(
@@ -449,7 +540,11 @@ class _AddCourseInformationScreenState
           if (snapshot.hasData) {
             final data = snapshot.data;
             double progress = data!.bytesTransferred / data.totalBytes;
-            return Center(child: CircularProgressIndicator(value: progress,color: Colors.white,));
+            return Center(
+                child: CircularProgressIndicator(
+              value: progress,
+              color: Colors.white,
+            ));
           } else {
             return SizedBox();
           }
@@ -459,8 +554,30 @@ class _AddCourseInformationScreenState
       return SizedBox();
     }
   }
-
+  Widget buildProgressForImage() {
+    if (taskimage != null) {
+      return StreamBuilder<TaskSnapshot>(
+        stream: taskimage!.snapshotEvents,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            final data = snapshot.data;
+            double progress = data!.bytesTransferred / data.totalBytes;
+            return Center(
+                child: CircularProgressIndicator(
+                  value: progress,
+                  color: Colors.white,
+                ));
+          } else {
+            return SizedBox();
+          }
+        },
+      );
+    } else {
+      return SizedBox();
+    }
+  }
 }
+
 class VideoPlayerScreen extends StatefulWidget {
   final String videoUrl;
 
@@ -501,7 +618,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             aspectRatio: _controller.value.aspectRatio,
             child: VideoPlayer(_controller),
           ),
-          Icon(Icons.play_circle,color: Colors.white,)
+          Icon(
+            Icons.play_circle,
+            color: Colors.white,
+          )
         ],
       ),
     );

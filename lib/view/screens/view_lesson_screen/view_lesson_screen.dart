@@ -19,26 +19,33 @@ class ViewLessonScreen extends StatefulWidget {
 }
 
 class _ViewLessonScreenState extends State<ViewLessonScreen> {
-  TextEditingController lessonTitleController = TextEditingController();
-  TextEditingController lessonSubtitleController = TextEditingController();
-  TextEditingController lessonDiscriptionController = TextEditingController();
-  final List<String> videoUrls = [
-    'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
-    // Add more video URLs here
-  ];
+  TextEditingController? lessonTitleController;
+  TextEditingController? lessonSubtitleController;
+  TextEditingController? lessonDiscriptionController;
+
   bool isShowAllVideo = false;
+
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    lessonTitleController = TextEditingController();
+    lessonSubtitleController = TextEditingController();
+    lessonDiscriptionController = TextEditingController();
+  }
+  @override
+  void dispose() {
+    lessonTitleController!.dispose();
+    lessonSubtitleController!.dispose();
+    lessonDiscriptionController!.dispose();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
-    final arguments =
-        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-      //  print('${arguments['index']}MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMmmm');
-
+    final arguments = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     return Scaffold(
         appBar: AppBar(
           leading: InkWell(
@@ -50,7 +57,7 @@ class _ViewLessonScreenState extends State<ViewLessonScreen> {
                 color: Constants.wightColor,
               )),
           title: Text(
-            'Lesson Name',
+            arguments['lessonName'],
             style: TextStyle(
                 color: Constants.wightColor, fontWeight: FontWeight.bold),
           ),
@@ -59,13 +66,9 @@ class _ViewLessonScreenState extends State<ViewLessonScreen> {
           backgroundColor: Constants.darkPink,
         ),
         body:SafeArea(
-          child: StreamBuilder(
-           stream: FirebaseFirestore.instance
-                      .collection('Lessons').doc(arguments['courseId']).collection('LessonData')
-                      .where('lessonId', isEqualTo: arguments['LessonId'])
-                      .snapshots(),
+          child:StreamBuilder(
+              stream: FirebaseFirestore.instance.collection('Lessons').doc(arguments['courseId']).collection('LessonData').doc(arguments['lessonId']).snapshots(),
               builder: (context, snapshot) {
-
                 if(snapshot.hasData){
                   return SingleChildScrollView(
                     child: Column(
@@ -92,9 +95,7 @@ class _ViewLessonScreenState extends State<ViewLessonScreen> {
                                   textEditingController: lessonTitleController,
                                   textColor: Colors.black,
                                   MediaQuery.of(context).size.width * .35,
-                                  snapshot.data!.docs[arguments['index']]
-                                      .get('lessonTitle')
-                                      .toString(),
+                                  snapshot.data!.data()!['lessonTitle'].toString(),
                                 ),
                               ],
                             ),
@@ -114,9 +115,7 @@ class _ViewLessonScreenState extends State<ViewLessonScreen> {
                                     textEditingController: lessonSubtitleController,
                                     textColor: Colors.black,
                                     MediaQuery.of(context).size.width * .35,
-                                  snapshot.data!.docs[arguments['index']]
-                                      .get('lessonSubTitle')
-                                      .toString(),),
+                                  snapshot.data!.data()!['lessonSubTitle'].toString()),
                               ],
                             ),
                           ],
@@ -142,16 +141,14 @@ class _ViewLessonScreenState extends State<ViewLessonScreen> {
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Text(
-                                  snapshot.data!.docs[arguments['index']]
-                                      .get('lessonDiscription')
-                                      .toString(),),
+                                  snapshot.data!.data()!['lessonDescription'].toString(),),
                               ),
                             )),
                         SizedBox(height: 30,),
                         ElevatedButton(onPressed: (){
-                         setState(() {
-                           isShowAllVideo = true;
-                         });
+                          setState(() {
+                            isShowAllVideo = true;
+                          });
                         }, child: Text('View All videos')),
                         isShowAllVideo == true? Padding(
                           padding: EdgeInsets.symmetric(
@@ -159,11 +156,9 @@ class _ViewLessonScreenState extends State<ViewLessonScreen> {
                           child: Container(
                             height: height * .40,
                             child: StreamBuilder(
-                              stream:  FirebaseFirestore.instance
-                                  .collection('videos')
-                                  .where("lessonDataId", isEqualTo: arguments['videoId'])
-                                  .snapshots(),
-                              builder: (context, snapshot) {
+                                stream:  FirebaseFirestore.instance
+                                    .collection('Videos').doc(arguments['lessonId']).collection('Videos').snapshots(),
+                                builder: (context, snapshot) {
                                   if(!snapshot.hasData){
                                     return Center(child: CircularProgressIndicator(),);
                                   }
@@ -185,11 +180,11 @@ class _ViewLessonScreenState extends State<ViewLessonScreen> {
                                                   context,
                                                   MaterialPageRoute(
                                                     builder: (context) => PlayVideoScreen(
-                                                        videoSubTitle:
-                                                      snapshot.data!.docs[index].get('videoSubTitle'),
-                                                        videoTitle:
-                                                        snapshot.data!.docs[index].get('videoTitle'),
-                                                        videoPath: snapshot.data!.docs[index].get('videoUrl'),
+                                                      videoSubTitle:
+                                                      snapshot.data!.docs[index]['videoSubTitle'],
+                                                      videoTitle:
+                                                      snapshot.data!.docs[index]['videoTitle'],
+                                                      videoPath: snapshot.data!.docs[index]['videoUrl'],
                                                     ),
                                                   ));
                                             },
@@ -198,36 +193,36 @@ class _ViewLessonScreenState extends State<ViewLessonScreen> {
                                               index: index,
                                               width: width,
                                               videoTitle:
-                                              snapshot.data!.docs[index].get('videoTitle'),
-                                              videosubTitle: snapshot.data!.docs[index].get('videoSubTitle'),
-                                              videoUrl:  snapshot.data!.docs[index].get('videoUrl'),
+                                              snapshot.data!.docs[index]['videoTitle'],
+                                              videosubTitle: snapshot.data!.docs[index]['videoSubTitle'],
+                                              videoUrl:  snapshot.data!.docs[index]['videoUrl'],
                                             )
                                         );
                                       },
                                     );
                                   }
                                   return SizedBox();
-                              }
+                                }
                             ),
                           ),
                         ):
-                            SizedBox()
+                        SizedBox()
                       ],
                     ),
 
                   );
                 }
 
-    else if(!snapshot.hasData){
-          return Center(child: CircularProgressIndicator(),);
-        }
-        else if(snapshot.hasError){
-          return Center(child: Text('Something went wrong'),);
-        }
-        return SizedBox();
-      }
+                else if(!snapshot.hasData){
+                  return Center(child: CircularProgressIndicator(),);
+                }
+                else if(snapshot.hasError){
+                  return Center(child: Text('Something went wrong'),);
+                }
+                return SizedBox();
+              }
 
-          ),
+          )
         )
 
         );
@@ -245,7 +240,7 @@ class _ViewLessonScreenState extends State<ViewLessonScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: VideoPlayerScreen(videoUrl: videoUrls[index]),
+          child: VideoPlayerScreen(videoUrl: videoUrl.toString()),
         ),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: width! * .01),

@@ -256,8 +256,12 @@ class _ViewCourseScreenState extends State<ViewCourseScreen> {
                 child: Center(child: CircularProgressIndicator(),)
               );
             }
+
+
             return SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
+                print('name and id${snapshot.data!.docs[index]['lessonId']}');
+                print(snapshot.data!.docs[index]['lessonName']);
                 return Padding(
                   padding: EdgeInsets.symmetric(horizontal: width * 0.03),
                   child: Card(
@@ -274,8 +278,7 @@ class _ViewCourseScreenState extends State<ViewCourseScreen> {
                                 arguments: ({
                                   'lessonId': snapshot.data!.docs[index]['lessonId'],
                                   'courseId': widget.courseId,
-                                  'index': index,
-                                  'videoId':snapshot.data!.docs[index]['videoId'],
+                                  'lessonName' : snapshot.data!.docs[index]['lessonName']
                                 })
                               );
                             },
@@ -311,11 +314,13 @@ class _ViewCourseScreenState extends State<ViewCourseScreen> {
                               Navigator.pushNamed(
                                   context,
                                   PageName.addLessonScreen,arguments: ({
-                                'CourseId':widget.courseId,
-                                'LessonId': snapshot.data!.docs[index]['lessonId'],
+                                'courseId':widget.courseId,
+                                'lessonId': snapshot.data!.docs[index]['lessonId'],
                                 'lessonName' : snapshot.data!.docs[index]['lessonName']
                               })
                               );
+
+
                             },
                             child: Container(
                               margin: const EdgeInsets.all(5),

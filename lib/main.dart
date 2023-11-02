@@ -6,13 +6,14 @@ import 'package:rose_excellence_admin_panel_web1/test.dart';
 import 'package:rose_excellence_admin_panel_web1/view/screens/home_screen/home_screen.dart';
 import 'package:rose_excellence_admin_panel_web1/view_model/login_bloc/login_bloc.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-    options: FirebaseOptions(
+    options: const FirebaseOptions(
       apiKey: "AIzaSyASljnvY9UBQEDOEfPlHnWG2wXM4PD6u3c",
       appId: "1:15144932025:web:21035d0d5114e17eb5c168",
-      projectId: "roseexcellence-d5e87", messagingSenderId: '15144932025',
+      projectId: "roseexcellence-d5e87",
+      messagingSenderId: '15144932025',
       storageBucket: "roseexcellence-d5e87.appspot.com",
       authDomain: "roseexcellence-d5e87.firebaseapp.com",
     ),
@@ -26,22 +27,25 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(providers: [
-      BlocProvider(create: (context) => LoginBloc(),)
-    ], child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        onGenerateRoute: Routes.generateRoutes,
-        title: 'Flutter Demo',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
-        ),
-        home:   HomeScreen()
-      //initialRoute: HomeScreen.pageName,
-    ));
+    return MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (context) => LoginBloc(),
+          )
+        ],
+        child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            onGenerateRoute: Routes.generateRoutes,
+            title: 'Flutter Demo',
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+              useMaterial3: true,
+            ),
+            home: HomeScreen()
+            //initialRoute: HomeScreen.pageName,
+            ));
   }
 }
-
 
 // import 'dart:io';
 //

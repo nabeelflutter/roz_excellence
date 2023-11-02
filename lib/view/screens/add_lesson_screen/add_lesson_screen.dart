@@ -12,8 +12,7 @@ import '../../../constants/constants.dart';
 import '../../widget/textfields.dart';
 
 class AddLessonScreen extends StatefulWidget {
-
-   AddLessonScreen({super.key});
+  AddLessonScreen({super.key});
 
   @override
   State<AddLessonScreen> createState() => _AddLessonScreenState();
@@ -25,6 +24,9 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
   TextEditingController videoTitleController = TextEditingController();
   TextEditingController videoSubtitleController = TextEditingController();
   late TextEditingController lessonDiscriptionController;
+  List<TextEditingController> subCategoryControllers = [];
+  List<Widget> subCategoryFields = [];
+
   List<Widget> addItemList = [];
   List<String> videoTitleList = [];
   bool readOnly = false;
@@ -34,12 +36,44 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
   late VideoPlayerController _controller;
   var pickedFile;
   Uuid uuid = Uuid();
+  Uuid uid = Uuid();
   List<dynamic> videoList = [];
   var videoUrl;
   var videoUrlPath;
-  String? lessonDataId;
-  UploadTask? task;
+  var fileUrl;
+  var fileUrlPath;
   bool isChecked = false;
+  bool isCheckedFile = false;
+  // String? lessonDataId;
+  UploadTask? task;
+  UploadTask? fileTask;
+  Future uploadFile() async {
+    FileUploadInputElement input = FileUploadInputElement()..accept = 'assignmentsFiles/*';
+    input.click();
+    input.onChange.listen((event) {
+      fileUrl = input.files!.first;
+      final reader = FileReader();
+      reader.readAsDataUrl(fileUrl);
+      reader.onLoadEnd.listen((event) {
+        Reference reference = FirebaseStorage.instance
+            .ref()
+            .child('assignmentsFiles/')
+            .child(uid.v4().toString());
+        setState(() {
+          fileTask = reference.putBlob(fileUrl);
+        });
+        fileTask!.whenComplete(() {
+          reference.getDownloadURL().then((url) {
+            fileUrlPath = url;
+          });
+          setState(() {
+            isCheckedFile = true;
+            fileTask = null;
+          });
+        });
+      });
+    });
+  }
   Future uploadVideo() async {
     FileUploadInputElement input = FileUploadInputElement()..accept = 'video/*';
     input.click();
@@ -89,9 +123,10 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
-    final userdata = ModalRoute.of(context)!.settings.arguments as Map<String,dynamic> ?;
+    final arguments =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
 
-    print('${userdata!['CourseId']}MMMMMMMMMMMMMMMMMMMMMM');
+    print('${arguments!['courseId']}MMMMMMMMMMMMMMMMMMMMMM');
     // print('${widget.lessonId}LLLLLLLLLLLLLLLLLLLLLLLL');
     return Scaffold(
       appBar: AppBar(
@@ -104,7 +139,7 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
               color: Constants.wightColor,
             )),
         title: Text(
-          'Lesson Name',
+          arguments['lessonName'],
           style: TextStyle(
               color: Constants.wightColor, fontWeight: FontWeight.bold),
         ),
@@ -112,26 +147,31 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
         iconTheme: IconThemeData(color: Constants.wightColor),
         backgroundColor: Constants.darkPink,
         actions: [
-          Container(
-            margin: EdgeInsets.all(5),
-            height: 40,
-            width: 110,
-            decoration: BoxDecoration(boxShadow: [
-              BoxShadow(
-                color: Constants.darkPink.withOpacity(0.1),
-                spreadRadius: 4,
-                blurRadius: 10,
-                offset: Offset(0, 3),
-              )
-            ], color: Colors.white, borderRadius: BorderRadius.circular(8)),
-            child: Center(
-                child: Text(
-              'Publish',
-              style: GoogleFonts.playfairDisplay().copyWith(
-                  color: Constants.darkPink,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold),
-            )),
+          InkWell(
+            onTap: () {
+              Navigator.pop(context);
+            },
+            child: Container(
+              margin: EdgeInsets.all(5),
+              height: 40,
+              width: 110,
+              decoration: BoxDecoration(boxShadow: [
+                BoxShadow(
+                  color: Constants.darkPink.withOpacity(0.1),
+                  spreadRadius: 4,
+                  blurRadius: 10,
+                  offset: Offset(0, 3),
+                )
+              ], color: Colors.white, borderRadius: BorderRadius.circular(8)),
+              child: Center(
+                  child: Text(
+                'Publish',
+                style: GoogleFonts.playfairDisplay().copyWith(
+                    color: Constants.darkPink,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold),
+              )),
+            ),
           ),
         ],
       ),
@@ -140,7 +180,7 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
           child: Column(
             children: [
               Container(
-                height: height * .50,
+               height: height * .50,
                 decoration: BoxDecoration(color: Colors.transparent),
                 child: Padding(
                   padding: EdgeInsets.symmetric(
@@ -273,17 +313,28 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
                               vertical: height * .02, horizontal: width * .02),
                           child: GestureDetector(
                             onTap: () async {
-                              lessonDataId = FirebaseFirestore.instance.collection('Lessons').doc().collection('LessonData').doc().id;
-                              await  FirebaseFirestore.instance.collection('Lessons').doc(userdata['CourseId']).collection('LessonData').doc(userdata['LessonId']).set(
-                                  {
-                                    'videoId' : lessonDataId,
-                                    'lessonName' : userdata['lessonName'],
-                                    'courseId' : userdata['CourseId'],
-                                    'lessonId' : userdata['LessonId'],
-                                    'lessonTitle': lessonTitleController.text.toString(),
-                                    'lessonSubTitle': lessonSubtitleController.text.toString(),
-                                    'lessonDiscription': lessonDiscriptionController.text.toString()
-                                  });
+                              //String   lessonDataId = FirebaseFirestore.instance.collection('Lessons').doc().collection('LessonData').doc().id;
+                              await FirebaseFirestore.instance
+                                  .collection('Lessons')
+                                  .doc(arguments['courseId'])
+                                  .collection('LessonData')
+                                  .doc(arguments['lessonId'])
+                                  .set({
+                                'lessonName': arguments['lessonName'],
+                                'courseId': arguments['courseId'],
+                                'lessonId': arguments['lessonId'],
+                                'lessonTitle':
+                                    lessonTitleController.text.toString(),
+                                'lessonSubTitle':
+                                    lessonSubtitleController.text.toString(),
+                                'lessonDescription':
+                                    lessonDiscriptionController.text.toString()
+                              }).then((value) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            'Your lesson successfully add')));
+                              });
                               setState(() {
                                 readOnly = true;
                               });
@@ -452,13 +503,22 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
                                                 child: Container(
                                                   // height: height * .25,
                                                   decoration:
-                                                  const BoxDecoration(color: Colors.grey),
+                                                      const BoxDecoration(
+                                                          color: Colors.grey),
                                                   width: width * .10,
-                                                  child:  Center(
+                                                  child: Center(
                                                     child: Stack(
-                                                      alignment: Alignment.center,
+                                                      alignment:
+                                                          Alignment.center,
                                                       children: [
-                                                        isChecked == true ?Icon(Icons.done,color: Colors.white,size: 60,):Icon(Icons.add),
+                                                        isChecked == true
+                                                            ? Icon(
+                                                                Icons.done,
+                                                                color: Colors
+                                                                    .white,
+                                                                size: 60,
+                                                              )
+                                                            : Icon(Icons.add),
                                                         buildProgress()
                                                       ],
                                                     ),
@@ -466,13 +526,13 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
                                                 ),
                                               ),
                                               SizedBox(
-                                                width: width*.20,
+                                                width: width * .20,
                                                 child: Stack(
                                                   fit: StackFit.expand,
                                                   // alignment: Alignment.center,
                                                   children: [
-                                                    _controller.value
-                                                            .isInitialized
+                                                    _controller
+                                                            .value.isInitialized
                                                         ? AspectRatio(
                                                             aspectRatio:
                                                                 _controller
@@ -494,11 +554,10 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
                                                         });
                                                       },
                                                       child: Icon(
-                                                        _controller.value
-                                                                .isPlaying
+                                                        _controller
+                                                                .value.isPlaying
                                                             ? Icons.pause
-                                                            : Icons
-                                                                .play_arrow,
+                                                            : Icons.play_arrow,
                                                         color: Colors.white,
                                                       ),
                                                     ),
@@ -522,35 +581,47 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
                               vertical: height * .02, horizontal: width * .02),
                           child: GestureDetector(
                             onTap: () async {
-                              String videoId = FirebaseFirestore.instance.collection('videos').doc().id;
-                              await FirebaseFirestore.instance.collection('videos').doc(videoId).set({
-                                'courseId': userdata['CourseId'],
-                                'videoId':videoId,
-                                'lessonId': userdata['LessonId'],
-                                'lessonName': userdata['lessonName'],
-                                'lessonDataId':lessonDataId,
-                                'videoTitle': videoTitleController.text.toString(),
-                                'videoSubTitle': videoSubtitleController.text.toString(),
-                                'videoUrl': videoUrlPath.toString(),
-                              }).whenComplete(() {
-                                isAddItem = true;
-                                setState(() {
-                                  videoTitleList
-                                      .add(videoTitleController.text.toString());
-                                  videoList.add(pickedFile);
-                                  addItemList.add(customWidget(
-                                    controller: _controller,
-                                      width: width,
-                                      height: height,
-                                      videoTitle: videoTitleController.text,
-                                      aspect: _controller.value.aspectRatio,
-                                      videoSubTitle: videoSubtitleController.text));
-                                  videoSubtitleController.clear();
-                                  videoTitleController.clear();
-                                  isChecked = false;
+                              if (task == null && isChecked) {
+                                String videoId = FirebaseFirestore.instance
+                                    .collection('Videos')
+                                    .doc()
+                                    .id;
+                                await FirebaseFirestore.instance
+                                    .collection('Videos')
+                                    .doc(arguments['lessonId'])
+                                    .collection('Videos')
+                                    .doc(videoId)
+                                    .set({
+                                  'courseId': arguments['courseId'],
+                                  'videoId': videoId,
+                                  'lessonId': arguments['lessonId'],
+                                  'videoTitle':
+                                      videoTitleController.text.toString(),
+                                  'videoSubTitle':
+                                      videoSubtitleController.text.toString(),
+                                  'videoUrl': videoUrlPath.toString(),
+                                }).whenComplete(() {
+                                  isAddItem = true;
+                                  setState(() {
+                                    videoTitleList.add(
+                                        videoTitleController.text.toString());
+                                    videoList.add(pickedFile);
+                                    addItemList.add(customWidget(
+                                        controller: _controller,
+                                        width: width,
+                                        height: height,
+                                        videoTitle: videoTitleController.text,
+                                        aspect: _controller.value.aspectRatio,
+                                        videoSubTitle:
+                                            videoSubtitleController.text));
+                                    videoSubtitleController.clear();
+                                    videoTitleController.clear();
+                                    isChecked = false;
+                                  });
                                 });
-                              });
-
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('First add your Lesson video')));
+                              }
                             },
                             child: Container(
                               decoration: BoxDecoration(
@@ -558,40 +629,42 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
                                       Border.all(color: Constants.greyColorr),
                                   borderRadius: BorderRadius.circular(10),
                                   color: Constants.greyColorr),
-                              child:task == null?const Center(
-                                child: Column(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    Text(
-                                      'S',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16),
-                                    ),
-                                    Text('U',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16)),
-                                    Text('B',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16)),
-                                    Text('M',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16)),
-                                    Text('I',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16)),
-                                    Text('T',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16)),
-                                  ],
-                                ),
-                              ): Center(child: CircularProgressIndicator()),
+                              child: task == null
+                                  ? const Center(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          Text(
+                                            'S',
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16),
+                                          ),
+                                          Text('U',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16)),
+                                          Text('B',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16)),
+                                          Text('M',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16)),
+                                          Text('I',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16)),
+                                          Text('T',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16)),
+                                        ],
+                                      ),
+                                    )
+                                  : Center(child: CircularProgressIndicator()),
                             ),
                           ),
                         ),
@@ -600,12 +673,176 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
                   ),
                 ),
               ),
+              Padding(
+                padding:  EdgeInsets.symmetric(horizontal: width*.05),
+                child: Text('Add Assignments',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 18),),
+              ),
+              Padding(
+                padding:  EdgeInsets.symmetric(horizontal: width*.10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                     Column(
+                       children: [
+                         const Text('Image/video with instructions',style: TextStyle(fontWeight: FontWeight.bold),),
+                        const SizedBox(height: 10,),
+                         GestureDetector(
+                           onTap: () async {
+                             uploadFile();
+                           },
+                           child: Container(
+                             height: 150,
+                             decoration:
+                             const BoxDecoration(
+                                 color: Colors.grey),
+                             width: width * .10,
+                             child: Center(
+                               child: Stack(
+                                 alignment:
+                                 Alignment.center,
+                                 children: [
+                                   isCheckedFile == true
+                                       ? Icon(
+                                     Icons.done,
+                                     color: Colors
+                                         .white,
+                                     size: 60,
+                                   )
+                                       : Icon(Icons.add),
+                                   buildProgressforFile()
+                                 ],
+                               ),
+                             ),
+                           ),
+                         ),
+                         SizedBox(
+                             width: width * .20,
+                             height: height * .09,
+                             child: _addFieldsButton()),
+                       ],
+                     ),
+                    Container(
+                      height: 300,
+                      width: 400,
+                      child: ListView.builder(
+                        itemCount: subCategoryControllers.length,
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: EdgeInsets.symmetric(vertical: height * .02),
+                            child: Column(
+                              children: [
+                                InkWell(
+                                  onTap: () async {},
+                                  child: subCategoryFields[index],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                ],),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Align(
+                  alignment: Alignment.topRight,
+                  child: InkWell(
+                    onTap: () async{
+                      String assignmentsId = FirebaseFirestore.instance.collection('Assignments').doc().id;
+                      await FirebaseFirestore.instance.collection('Assignments').doc(arguments['courseId']).collection('Assignments').doc(arguments['lessonId']).set({
+                        'assignmentsfileUrl' :fileUrlPath.toString(),
+                        'questions':subCategoryControllers.map((controller) => controller.text).toList(),
+                       'assignmentsId':assignmentsId
+                      }).whenComplete((){
+                        Navigator.pop(context);
+                      });
+                    },
+
+                    child: Container(
+                      height: 70,
+                      width: 200,
+                      padding: EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Constants.darkPink,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: Center(
+                          child: Text(
+                            'Submitted',
+                            style: TextStyle(
+                                color: Constants.wightColor, fontWeight: FontWeight.bold),
+                          )),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+  Widget _addFieldsButton() {
+    IconData icon = Icons.edit;
+    bool isEnbled = true;
+    return ListTile(
+      title: Container(
+        height: 120,
+        width: 200,
+        padding: EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          color: Constants.darkPink,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white, width: 2),
+        ),
+        child: Center(
+            child: Text(
+              'Add Question',
+              style: TextStyle(
+                  color: Constants.wightColor, fontWeight: FontWeight.bold),
+            )),
+      ),
+      onTap: () {
+        final subCategoryNameController = TextEditingController();
+        final subCategoryField = Container(
+          padding: const EdgeInsets.only(left: 10, right: 10),
+          child: SizedBox(
+            width: 600,
+            child: CustomTextField(
+              readOnly: false,
+              isEnebled: isEnbled,
+              suffix: GestureDetector(
+                  onTap: () {
+                    print('>>>>>>>>>>>>>>>');
+                    setState(() {
+                      if (icon == Icons.edit) {
+                        isEnbled = true;
+                        icon = Icons.done;
+                      } else {
+                        isEnbled = false;
+                        icon = Icons.edit;
+                      }
+                    });
+                  },
+                  child: Icon(icon)),
+              validator: (value) {},
+              textEditingController: subCategoryNameController,
+              textColor: Colors.black,
+              MediaQuery.of(context).size.width,
+              'Question',
+            ),
+          ),
+        );
 
+        setState(() {
+          subCategoryControllers.add(subCategoryNameController);
+          subCategoryFields.add(subCategoryField);
+        });
+      },
+    );
   }
   Widget buildProgress() {
     if (task != null) {
@@ -615,7 +852,11 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
           if (snapshot.hasData) {
             final data = snapshot.data;
             double progress = data!.bytesTransferred / data.totalBytes;
-            return Center(child: CircularProgressIndicator(value: progress,color: Colors.white,));
+            return Center(
+                child: CircularProgressIndicator(
+              value: progress,
+              color: Colors.white,
+            ));
           } else {
             return SizedBox();
           }
@@ -625,12 +866,35 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
       return SizedBox();
     }
   }
-
+  Widget buildProgressforFile() {
+    if (fileTask != null) {
+      return StreamBuilder<TaskSnapshot>(
+        stream: fileTask!.snapshotEvents,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            final data = snapshot.data;
+            double progress = data!.bytesTransferred / data.totalBytes;
+            return Center(
+                child: CircularProgressIndicator(
+                  value: progress,
+                  color: Colors.white,
+                ));
+          } else {
+            return SizedBox();
+          }
+        },
+      );
+    } else {
+      return SizedBox();
+    }
+  }
   Widget customWidget(
       {double? height,
       double? width,
       String? videoTitle,
-      String? videoSubTitle, required aspect,required controller}) {
+      String? videoSubTitle,
+      required aspect,
+      required controller}) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Container(
@@ -641,16 +905,17 @@ class _AddLessonScreenState extends State<AddLessonScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child:Stack(
+              child: Stack(
                 alignment: Alignment.center,
                 children: [
                   AspectRatio(
-                    aspectRatio:
-                    aspect,
-                    child: VideoPlayer(
-                        controller),
+                    aspectRatio: aspect,
+                    child: VideoPlayer(controller),
                   ),
-                  Icon(Icons.play_circle,color: Colors.white,)
+                  Icon(
+                    Icons.play_circle,
+                    color: Colors.white,
+                  )
                 ],
               ),
             ),

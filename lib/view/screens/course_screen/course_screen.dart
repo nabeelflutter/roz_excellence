@@ -60,7 +60,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                 return Center(child:Text('Something went wrong'));
               }
               else if(!snapshot.hasData){
-                return Center(child: Text('No data availabe'));
+                return Center(child: CircularProgressIndicator());
               }
               List<AddCourseInformationModel> models = snapshot.data!.docs.map((QueryDocumentSnapshot doc) {
                 return AddCourseInformationModel.fromMap(doc.data() as Map<String, dynamic>);
